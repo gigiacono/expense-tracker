@@ -91,7 +91,7 @@ export default function CategoryManager({ categories, onUpdate }: CategoryManage
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             placeholder="Es: Abbonamenti"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
 

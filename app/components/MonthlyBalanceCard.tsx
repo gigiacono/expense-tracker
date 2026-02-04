@@ -147,7 +147,7 @@ export default function MonthlyBalanceCard({ transactionsTotal }: MonthlyBalance
                             value={startingBalance}
                             onChange={(e) => setStartingBalance(e.target.value)}
                             placeholder="Es: 1500.00"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
                     <div>
@@ -160,7 +160,7 @@ export default function MonthlyBalanceCard({ transactionsTotal }: MonthlyBalance
                             value={endingBalance}
                             onChange={(e) => setEndingBalance(e.target.value)}
                             placeholder="Es: 1200.00"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
                     <div className="flex gap-2">

@@ -119,7 +119,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         required
                     />
                 </div>
@@ -132,7 +132,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Es: Cena al ristorante"
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         required
                     />
                 </div>
@@ -147,7 +147,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-semibold"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-semibold bg-white text-gray-900"
                         required
                     />
                 </div>
@@ -158,7 +158,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                     <select
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     >
                         <option value="">Nessuna categoria</option>
                         {categories.map((cat) => (

@@ -142,7 +142,7 @@ export default function MerchantRuleManager({
                             value={pattern}
                             onChange={(e) => setPattern(e.target.value)}
                             placeholder="Es: AMAZON, SPOTIFY, UBER..."
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                         <p className="text-xs text-gray-500 mt-1">
                             Tutte le transazioni che contengono questa parola verranno categorizzate.
@@ -154,7 +154,7 @@ export default function MerchantRuleManager({
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         >
                             <option value="">Seleziona categoria...</option>
                             {categories.map((cat) => (
