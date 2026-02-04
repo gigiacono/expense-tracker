@@ -15,13 +15,25 @@ CREATE TABLE IF NOT EXISTS categories (
 -- Inserisci alcune categorie di default
 INSERT INTO categories (name, icon, color) VALUES
   ('Spesa', '🛒', '#22C55E'),
-  ('Trasporti', '🚗', '#3B82F6'),
-  ('Casa', '🏠', '#A855F7'),
-  ('Ristoranti', '🍽️', '#F97316'),
+  ('Fitness', '💪', '#06B6D4'),
+  ('Trasporti', '🚌', '#3B82F6'),
+  ('Telefono', '📱', '#64748B'),
+  ('Macchina', '🚗', '#EF4444'),
+  ('Motorino', '🛵', '#F97316'),
+  ('Spese Mediche', '💊', '#14B8A6'),
+  ('Pasti Fuori', '🍽️', '#EAB308'),
+  ('Caffè/Aperitivi', '☕', '#F59E0B'),
   ('Shopping', '🛍️', '#EC4899'),
-  ('Salute', '💊', '#14B8A6'),
-  ('Intrattenimento', '🎬', '#EAB308'),
-  ('Altro', '📦', '#6B7280')
+  ('Svago', '🎉', '#A855F7'),
+  ('Spotify', '🎵', '#1DB954'),
+  ('iCloud', '☁️', '#007AFF'),
+  ('Abbigliamento', '👕', '#6366F1'),
+  ('Regali', '🎁', '#F43F5E'),
+  ('Imprevisti', '⚠️', '#94A3B8'),
+  ('Fondo Pensione', '👴', '#10B981'),
+  ('Amazon Prime', '📦', '#00A8E1'),
+  ('Viaggi', '✈️', '#0EA5E9'),
+  ('Arredo Casa', '🏠', '#D946EF')
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. Tabella regole enti (merchant rules)
