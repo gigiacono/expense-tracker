@@ -38,20 +38,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-      export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="it">
-      <head>
-        <link rel="icon" href="/icon-192.png" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -64,11 +50,6 @@ export default function RootLayout({
           }}
         />
         {children}
-      </body>
-    </html>
-  );
-} 
- {children}
       </body>
     </html>
   );
