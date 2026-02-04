@@ -9,20 +9,11 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function POST(request: NextRequest) {
   try {
-    // Verifica API key per sicurezza
-    const apiKey = request.headers.get('x-api-key')
-    const expectedKey = process.env.N8N_API_KEY || 'test-key-123'
-    
-    if (apiKey !== expectedKey) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    // Nota: per ora l'API è aperta. In futuro aggiungere autenticazione utente.
 
     // Leggi le transazioni dal body
     const transactions = await request.json()
-    
+
     if (!Array.isArray(transactions)) {
       return NextResponse.json(
         { error: 'Body deve essere un array di transazioni' },
