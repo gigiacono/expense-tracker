@@ -44,17 +44,25 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 // Converti in JSON
                 const jsonData = XLSX.utils.sheet_to_json<RevolutTransaction>(worksheet)
 
-                // Mappa al nostro formato
+                // Mappa al nostro formato - supporta sia colonne in italiano che inglese
                 const transactions: ParsedTransaction[] = jsonData
-                    .filter(row => row.State === 'COMPLETED' && row.Amount !== undefined)
+                    .filter(row => {
+                        // Controlla State in inglese o italiano (COMPLETED/COMPLETATO)
+                        const state = row.State || ''
+                        return (state === 'COMPLETED' || state === 'COMPLETATO') &&
+                            (row.Amount !== undefined || row.Importo !== undefined)
+                    })
                     .map((row) => {
-                        const amount = Number(row.Amount)
-                        const date = row['Completed Date'] || row['Started Date']
-                        const description = row.Description || 'Nessuna descrizione'
+                        // Supporta sia nomi inglesi che italiani
+                        const amount = Number(row.Amount ?? row.Importo ?? 0)
+                        const date = row['Completed Date'] || row['Data di completamento'] ||
+                            row['Started Date'] || row['Data di inizio'] || ''
+                        const description = row.Description || row.Descrizione || 'Nessuna descrizione'
+                        const currency = row.Currency || row.Valuta || 'EUR'
 
                         // Crea un ID deterministico basato sui dati della transazione
                         // Questo permette di rilevare duplicati anche tra import diversi
-                        const dateStr = new Date(date).toISOString().split('T')[0]
+                        const dateStr = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
                         const amountStr = Math.abs(amount * 100).toFixed(0)
                         const descHash = description.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
                         const revolutId = `rev_${dateStr}_${amountStr}_${descHash}`
@@ -63,8 +71,8 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                             date: dateStr,
                             description: description,
                             amount: Math.abs(amount),
-                            currency: row.Currency || 'EUR',
-                            type: amount < 0 ? 'expense' : 'income',
+                            currency: currency,
+                            type: amount < 0 ? 'expense' : 'income' as 'expense' | 'income',
                             revolut_id: revolutId
                         }
                     })

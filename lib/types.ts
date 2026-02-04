@@ -42,15 +42,28 @@ export type MonthlyBalance = {
 }
 
 // Tipo per transazione da Excel Revolut (prima del parsing)
+// Supporta sia nomi colonne in inglese che italiano
 export type RevolutTransaction = {
-  Type: string
-  Product: string
-  'Started Date': string
-  'Completed Date': string
-  Description: string
-  Amount: number
-  Fee: number
-  Currency: string
-  State: string
-  Balance: number
+  // Colonne in inglese
+  Type?: string
+  Product?: string
+  'Started Date'?: string
+  'Completed Date'?: string
+  Description?: string
+  Amount?: number
+  Fee?: number
+  Currency?: string
+  State?: string
+  Balance?: number
+  // Colonne in italiano
+  Tipo?: string
+  Prodotto?: string
+  'Data di inizio'?: string
+  'Data di completamento'?: string
+  Descrizione?: string
+  Importo?: number
+  Costo?: number
+  Valuta?: string
+  Saldo?: number
 }
+
