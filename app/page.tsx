@@ -339,7 +339,6 @@ export default function Home() {
         <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit">
           {[
             { id: 'transactions', label: '📋 Transazioni', icon: '' },
-            { id: 'import', label: '📤 Import', icon: '' },
             { id: 'settings', label: '⚙️ Impostazioni', icon: '' },
           ].map((tab) => (
             <button
@@ -403,7 +402,14 @@ export default function Home() {
             {/* Manual Transaction Form */}
             <TransactionForm
               categories={categories}
-              onSuccess={() => fetchTransactions()}
+              onSuccess={(date) => {
+                fetchTransactions()
+                if (date) {
+                  setSelectedDate(date)
+                  setActiveTab('transactions')
+                  addLog('info', `📅 Vista aggiornata: ${date.toLocaleString('it-IT', { month: 'long' })}`)
+                }
+              }}
             />
 
             {/* Transactions List */}
@@ -502,21 +508,7 @@ export default function Home() {
           </div>
         )}
 
-        {!loading && !error && activeTab === 'import' && (
-          <div className="space-y-6">
-            <ExcelUploader
-              categories={categories}
-              onImportComplete={(importedDate) => {
-                fetchTransactions()
-                if (importedDate) {
-                  setSelectedDate(importedDate)
-                  setActiveTab('transactions')
-                  addLog('info', `📅 Vista aggiornata al mese di ${importedDate.toLocaleString('it-IT', { month: 'long' })}`)
-                }
-              }}
-            />
-          </div>
-        )}
+
 
         {!loading && !error && activeTab === 'settings' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
