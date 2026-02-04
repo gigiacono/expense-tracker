@@ -375,34 +375,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Debug Log Panel */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowLogs(!showLogs)}
-            className="text-sm text-slate-500 hover:text-slate-300 flex items-center gap-2"
-          >
-            {showLogs ? '🔽' : '▶️'} Debug Log ({logs.length})
-          </button>
-          {showLogs && (
-            <div className="mt-2 bg-slate-900/80 border border-slate-700 rounded-xl p-4 max-h-48 overflow-y-auto font-mono text-xs">
-              {logs.length === 0 ? (
-                <p className="text-slate-500">Nessun log...</p>
-              ) : (
-                logs.map((log, i) => (
-                  <div
-                    key={i}
-                    className={`py-1 ${log.type === 'error' ? 'text-red-400' :
-                      log.type === 'success' ? 'text-green-400' :
-                        'text-slate-400'
-                      }`}
-                  >
-                    <span className="text-slate-600">[{log.time}]</span> {log.message}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+
 
         {/* Content */}
         {loading && (
@@ -594,6 +567,38 @@ export default function Home() {
                 >
                   🗑️ Elimina TUTTE le transazioni
                 </button>
+              </div>
+
+              {/* Debug Log Panel */}
+              <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <button
+                  onClick={() => setShowLogs(!showLogs)}
+                  className="w-full flex justify-between items-center text-slate-400 hover:text-white transition-colors"
+                >
+                  <span className="font-semibold flex items-center gap-2">🐞 Debug Log</span>
+                  <span>{showLogs ? '🔽' : '▶️'} ({logs.length})</span>
+                </button>
+
+                {showLogs && (
+                  <div className="mt-4 bg-slate-900 rounded-xl p-4 max-h-48 overflow-y-auto font-mono text-xs border border-slate-700/50">
+                    {logs.length === 0 ? (
+                      <p className="text-slate-600 italic">Nessun log in memoria...</p>
+                    ) : (
+                      logs.map((log, i) => (
+                        <div
+                          key={i}
+                          className={`py-1 border-b border-slate-800/50 last:border-0 ${log.type === 'error' ? 'text-red-400' :
+                              log.type === 'success' ? 'text-green-400' :
+                                'text-slate-400'
+                            }`}
+                        >
+                          <span className="text-slate-600 mr-2">[{log.time}]</span>
+                          {log.message}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
