@@ -8,6 +8,8 @@ import CategoryManager from './components/CategoryManager'
 import MerchantRuleManager from './components/MerchantRuleManager'
 import TransactionForm from './components/TransactionForm'
 import MonthlyBalanceCard from './components/MonthlyBalanceCard'
+import MonthlyReport from './components/MonthlyReport'
+import TrendChart from './components/TrendChart'
 
 type Tab = 'transactions' | 'import' | 'settings'
 
@@ -32,6 +34,36 @@ export default function Home() {
     const time = new Date().toLocaleTimeString('it-IT')
     setLogs(prev => [...prev, { time, type, message }].slice(-50))
   }, [])
+
+  // New state for month filtering
+  const [selectedDate, setSelectedDate] = useState(new Date())
+
+  const changeMonth = (increment: number) => {
+    setSelectedDate(prev => {
+      const newDate = new Date(prev)
+      newDate.setMonth(newDate.getMonth() + increment)
+      return newDate
+    })
+  }
+
+  const deleteTransaction = async (id: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questa transazione?')) return
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      addLog('success', '🗑️ Transazione eliminata')
+      // Update local state immediately
+      setTransactions(prev => prev.filter(t => t.id !== id))
+    } catch (err: any) {
+      addLog('error', `❌ Errore eliminazione: ${err.message}`)
+    }
+  }
 
   const fetchTransactions = useCallback(async () => {
     addLog('info', '📥 Fetching transactions...')
@@ -195,23 +227,54 @@ export default function Home() {
     return null
   }
 
-  const totalExpenses = transactions
+
+
+  // Filter transactions for selected month
+  const filteredTransactions = transactions.filter(t => {
+    const tDate = new Date(t.date)
+    return tDate.getMonth() === selectedDate.getMonth() &&
+      tDate.getFullYear() === selectedDate.getFullYear()
+  })
+
+  // Calculate totals based on filtered transactions
+  const totalExpenses = filteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0)
 
-  const totalIncome = transactions
+  const totalIncome = filteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0)
+
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            💰 Finance Tracker
-          </h1>
-          <p className="text-slate-400 mt-2">Gestisci le tue finanze con semplicità</p>
+        {/* Header with Month Navigation */}
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              💰 Finance Tracker
+            </h1>
+            <p className="text-slate-400 mt-2">Gestisci le tue finanze con semplicità</p>
+          </div>
+
+          <div className="flex items-center gap-4 bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+            <button
+              onClick={() => changeMonth(-1)}
+              className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
+            >
+              ◀️
+            </button>
+            <h2 className="text-xl font-bold text-white min-w-[160px] text-center capitalize">
+              {selectedDate.toLocaleString('it-IT', { month: 'long', year: 'numeric' })}
+            </h2>
+            <button
+              onClick={() => changeMonth(1)}
+              className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
+            >
+              ▶️
+            </button>
+          </div>
         </header>
 
         {/* Summary Cards */}
@@ -240,6 +303,20 @@ export default function Home() {
             </p>
           </div>
         </div>
+
+        {/* Reports Section (only in Transactions tab) */}
+        {!loading && !error && activeTab === 'transactions' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <MonthlyReport
+              transactions={filteredTransactions}
+              categories={categories}
+            />
+            <TrendChart
+              transactions={transactions}
+              currentDate={selectedDate}
+            />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit">
@@ -316,17 +393,17 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden">
               <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
                 <h2 className="text-xl font-semibold">
-                  Transazioni ({transactions.length})
+                  Transazioni ({filteredTransactions.length})
                 </h2>
               </div>
 
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">
                   Nessuna transazione trovata. Importa un file Excel o aggiungi manualmente!
                 </div>
               ) : (
                 <div className="divide-y divide-slate-700/50">
-                  {transactions.map((t) => {
+                  {filteredTransactions.map((t) => {
                     const cat = getCategoryForTransaction(t)
                     return (
                       <div key={t.id} className="px-6 py-4 hover:bg-slate-700/30 transition-colors">
@@ -381,12 +458,22 @@ export default function Home() {
                             </div>
                           </div>
 
-                          <div className="text-right ml-4">
+
+                          <div className="text-right ml-4 flex flex-col items-end">
                             <p className={`text-xl font-bold ${t.type === 'expense' ? 'text-red-400' : 'text-green-400'
                               }`}>
                               {t.type === 'expense' ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
                             </p>
-                            <p className="text-xs text-slate-500">{t.currency}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <p className="text-xs text-slate-500">{t.currency}</p>
+                              <button
+                                onClick={() => deleteTransaction(t.id)}
+                                className="text-slate-600 hover:text-red-400 transition-colors"
+                                title="Elimina transazione"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
