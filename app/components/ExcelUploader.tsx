@@ -90,7 +90,9 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                             description.includes('POCKET') ||
                             description.includes('VAULT') ||
                             description.includes('TO MY ACCOUNT') ||
-                            description.includes('FROM MY ACCOUNT')
+                            description.includes('FROM MY ACCOUNT') ||
+                            description.includes('CONTO DEPOSITO') || // Nuovo!
+                            description.includes('RICARICA DI')       // Nuovo!
 
                         const shouldExclude = isInterest || isInternalTransfer
 
