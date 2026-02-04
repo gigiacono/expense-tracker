@@ -137,6 +137,10 @@ expense-tracker/
 
 ## 📝 Changelog
 
+### v1.3.3 (04/02/2026)
+- 🧠 **Smart Categorization UX**: Nuova finestra modale per scegliere tra modifica singola o massiva (regola)
+- ⚡️ **Feedback Immediato**: UI ottimizzata per la creazione regole
+
 ### v1.3.2 (04/02/2026)
 - 🅰️ **Nuovo Font**: App ridisegnata con tipografia **Montserrat**
 - 💅 **UI Polish**: Migliorata leggibilità generale
