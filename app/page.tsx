@@ -10,6 +10,7 @@ import TransactionForm from './components/TransactionForm'
 import MonthlyBalanceCard from './components/MonthlyBalanceCard'
 import MonthlyReport from './components/MonthlyReport'
 import TrendChart from './components/TrendChart'
+import CategorizationModal from './components/CategorizationModal'
 
 type Tab = 'transactions' | 'import' | 'settings'
 
@@ -29,6 +30,9 @@ export default function Home() {
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [showLogs, setShowLogs] = useState(true)
+
+  // Modal state for categorization choice
+  const [pendingCategorization, setPendingCategorization] = useState<{ t: Transaction, c: Category } | null>(null)
 
   const addLog = useCallback((type: LogEntry['type'], message: string) => {
     const time = new Date().toLocaleTimeString('it-IT')
@@ -148,59 +152,80 @@ export default function Home() {
 
   const updateTransactionCategory = async (transaction: Transaction, categoryId: string | null) => {
     try {
-      // 1. Aggiorna la singola transazione
+      // If we are removing a category (setting to null), just do it immediately
+      if (!categoryId) {
+        const { error } = await supabase
+          .from('transactions')
+          .update({ category_id: null })
+          .eq('id', transaction.id)
+
+        if (error) throw error
+        setEditingTransaction(null)
+        fetchTransactions()
+        addLog('info', `🗑️ Categoria rimossa per "${transaction.description}"`)
+        return
+      }
+
+      // If we are setting a category, open the modal to ask scope
+      const category = categories.find(c => c.id === categoryId)
+      if (category) {
+        setPendingCategorization({ t: transaction, c: category })
+        setEditingTransaction(null) // Close the dropdown
+      }
+    } catch (err: any) {
+      console.error('❌ Errore update:', err)
+      addLog('error', `❌ Errore aggiornamento: ${err.message}`)
+    }
+  }
+
+  const handleCategorizationConfirm = async (scope: 'single' | 'all') => {
+    if (!pendingCategorization) return
+    const { t: transaction, c: category } = pendingCategorization
+
+    addLog('info', scope === 'all'
+      ? `🔄 Applicazione regola per "${transaction.description}" (Tutte)...`
+      : `✏️ Aggiornamento singola transazione...`)
+
+    try {
+      // 1. Always update the current transaction first
       const { error } = await supabase
         .from('transactions')
-        .update({ category_id: categoryId })
+        .update({ category_id: category.id })
         .eq('id', transaction.id)
 
       if (error) throw error
 
-      setEditingTransaction(null)
-      fetchTransactions()
+      // 2. If 'all', create rule and update others
+      if (scope === 'all') {
+        // Create rule
+        const { error: ruleError } = await supabase
+          .from('merchant_rules')
+          .upsert({
+            merchant_pattern: transaction.description,
+            category_id: category.id
+          }, { onConflict: 'merchant_pattern' })
 
-      // 2. Se abbiamo selezionato una categoria, chiedi se applicare a tutte
-      if (categoryId) {
-        const category = categories.find(c => c.id === categoryId)
-        if (category && confirm(`Vuoi applicare la categoria "${category.name}" a tutte le transazioni future di "${transaction.description}"?`)) {
-          addLog('info', `🔄 Applicazione regola per "${transaction.description}"...`)
+        if (ruleError) {
+          addLog('error', `❌ Errore creazione regola: ${ruleError.message}`)
+        } else {
+          // Update past transactions
+          await supabase
+            .from('transactions')
+            .update({ category_id: category.id })
+            .eq('description', transaction.description)
 
-          // Crea regola per il futuro
-          const { error: ruleError } = await supabase
-            .from('merchant_rules')
-            .upsert({
-              merchant_pattern: transaction.description,
-              category_id: categoryId
-            }, { onConflict: 'merchant_pattern' })
-            .select()
-
-          if (!ruleError) {
-            // Applica a tutte le transazioni passate con la stessa descrizione
-            await supabase
-              .from('transactions')
-              .update({ category_id: categoryId })
-              .eq('description', transaction.description)
-              .is('category_id', null) // Aggiorna solo quelle non categorizzate? O tutte? Meglio tutte per coerenza.
-
-            // Rimuovo il filtro .is('category_id', null) per forzare l'aggiornamento su tutte
-            await supabase
-              .from('transactions')
-              .update({ category_id: categoryId })
-              .eq('description', transaction.description)
-
-            addLog('success', `✅ Regola creata e applicata a tutte le transazioni di "${transaction.description}"`)
-            fetchTransactions()
-            fetchRules()
-          } else {
-            console.error('Errore creazione regola:', ruleError)
-            addLog('error', `❌ Errore creazione regola: ${ruleError.message}`)
-          }
+          addLog('success', `✅ Regola creata e applicata a tutte le transazioni simili!`)
+          fetchRules()
         }
+      } else {
+        addLog('success', `✅ Categoria aggiornata per la singola transazione`)
       }
 
+      fetchTransactions()
     } catch (err: any) {
-      console.error('❌ Errore update:', err)
-      addLog('error', `❌ Errore aggiornamento: ${err.message}`)
+      addLog('error', `❌ Errore salvataggio: ${err.message}`)
+    } finally {
+      setPendingCategorization(null)
     }
   }
 
@@ -588,8 +613,8 @@ export default function Home() {
                         <div
                           key={i}
                           className={`py-1 border-b border-slate-800/50 last:border-0 ${log.type === 'error' ? 'text-red-400' :
-                              log.type === 'success' ? 'text-green-400' :
-                                'text-slate-400'
+                            log.type === 'success' ? 'text-green-400' :
+                              'text-slate-400'
                             }`}
                         >
                           <span className="text-slate-600 mr-2">[{log.time}]</span>
@@ -604,6 +629,14 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <CategorizationModal
+        isOpen={!!pendingCategorization}
+        transaction={pendingCategorization?.t || null}
+        category={pendingCategorization?.c || null}
+        onClose={() => setPendingCategorization(null)}
+        onConfirm={handleCategorizationConfirm}
+      />
     </main>
   )
 }
