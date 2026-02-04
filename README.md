@@ -136,6 +136,13 @@ expense-tracker/
 
 ## 📝 Changelog
 
+### v1.3.0 (04/02/2026)
+- ➕ **Menu Unificato**: Nuovo FAB button per Add Manuale e Import File
+- 📈 **Nuovo Chart**: Area Chart SVG per visualizzare l'andamento del saldo annuale
+- 🧹 **Filtri Avanzati**: Esclusione automatica interessi e giroconti (Conto Deposito, Ricariche)
+- ⚡️ **Real-time Sync**: Aggiornamento immediato dei grafici alla modifica dei saldi
+- 📋 **Nuove Categorie**: Lista estesa a 20 categorie personalizzate
+
 ### v1.1.2 (04/02/2026)
 - ✨ **Aggiornamento Intelligente Categorie**: Applicando una categoria, l'app propone di aggiornare tutte le transazioni simili e creare una regola futura
 - 🧹 **Elimina Tutto**: Nuova "Zona Pericolo" in Impostazioni per resettare il database
