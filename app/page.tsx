@@ -261,6 +261,27 @@ export default function Home() {
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0)
 
+  // Group transactions by date
+  const groupedTransactions = filteredTransactions.reduce((groups, transaction) => {
+    const date = transaction.date.split('T')[0]
+    if (!groups[date]) {
+      groups[date] = {
+        transactions: [],
+        total: 0
+      }
+    }
+    groups[date].transactions.push(transaction)
+    if (transaction.type === 'expense') {
+      groups[date].total -= Math.abs(transaction.amount)
+    } else {
+      groups[date].total += Math.abs(transaction.amount)
+    }
+    return groups
+  }, {} as Record<string, { transactions: typeof transactions, total: number }>)
+
+  // Sort dates descending
+  const sortedDates = Object.keys(groupedTransactions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -426,78 +447,95 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-700/50">
-                  {filteredTransactions.map((t) => {
-                    const cat = getCategoryForTransaction(t)
+                  {sortedDates.map((date) => {
+                    const group = groupedTransactions[date]
+                    const dateObj = new Date(date)
+                    const isToday = new Date().toDateString() === dateObj.toDateString()
+
                     return (
-                      <div key={t.id} className="px-6 py-4 hover:bg-slate-700/30 transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-white">
-                                {t.description || 'Nessuna descrizione'}
-                              </p>
-                              {t.is_manual && (
-                                <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded">
-                                  manuale
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2 mt-2 text-sm">
-                              <span className="text-slate-400">
-                                📅 {new Date(t.date).toLocaleDateString('it-IT')}
-                              </span>
+                      <div key={date} className="bg-slate-800/30">
+                        {/* Daily Header */}
+                        <div className="px-6 py-3 bg-slate-900/50 flex justify-between items-center sticky top-0 backdrop-blur-sm z-10 border-y border-slate-700/50">
+                          <h3 className="font-semibold text-slate-300 flex items-center gap-2">
+                            {isToday ? 'Oggi' : dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          </h3>
+                          <span className={`font-mono font-medium ${group.total >= 0 ? 'text-green-400' : 'text-slate-400'}`}>
+                            {group.total < 0 ? '-' : group.total > 0 ? '+' : ''}€{Math.abs(group.total).toFixed(2)}
+                          </span>
+                        </div>
 
-                              {/* Category Display/Edit */}
-                              {editingTransaction === t.id ? (
-                                <select
-                                  value={t.category_id || ''}
-                                  onChange={(e) => updateTransactionCategory(t, e.target.value || null)}
-                                  onBlur={() => setEditingTransaction(null)}
-                                  autoFocus
-                                  className="bg-slate-700 text-white px-2 py-0.5 rounded text-sm border border-slate-600"
-                                >
-                                  <option value="">Nessuna categoria</option>
-                                  {categories.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                      {c.icon} {c.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <button
-                                  onClick={() => setEditingTransaction(t.id)}
-                                  className={`px-2 py-0.5 rounded text-sm transition-colors ${cat
-                                    ? ''
-                                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                                    }`}
-                                  style={cat ? {
-                                    backgroundColor: cat.color + '30',
-                                    color: cat.color
-                                  } : undefined}
-                                >
-                                  {cat ? `${cat.icon} ${cat.name}` : '+ Categoria'}
-                                </button>
-                              )}
-                            </div>
-                          </div>
+                        {/* Daily Transactions */}
+                        <div className="divide-y divide-slate-700/30">
+                          {group.transactions.map((t) => {
+                            const cat = getCategoryForTransaction(t)
+                            return (
+                              <div key={t.id} className="px-6 py-4 hover:bg-slate-700/30 transition-colors">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-white">
+                                        {t.description || 'Nessuna descrizione'}
+                                      </p>
+                                      {t.is_manual && (
+                                        <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded">
+                                          manuale
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-2 text-sm">
+                                      {/* Category Display/Edit */}
+                                      {editingTransaction === t.id ? (
+                                        <select
+                                          value={t.category_id || ''}
+                                          onChange={(e) => updateTransactionCategory(t, e.target.value || null)}
+                                          onBlur={() => setEditingTransaction(null)}
+                                          autoFocus
+                                          className="bg-slate-700 text-white px-2 py-0.5 rounded text-sm border border-slate-600"
+                                        >
+                                          <option value="">Nessuna categoria</option>
+                                          {categories.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                              {c.icon} {c.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        <button
+                                          onClick={() => setEditingTransaction(t.id)}
+                                          className={`px-2 py-0.5 rounded text-sm transition-colors ${cat
+                                            ? ''
+                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                            }`}
+                                          style={cat ? {
+                                            backgroundColor: cat.color + '30',
+                                            color: cat.color
+                                          } : undefined}
+                                        >
+                                          {cat ? `${cat.icon} ${cat.name}` : '+ Categoria'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
 
-
-                          <div className="text-right ml-4 flex flex-col items-end">
-                            <p className={`text-xl font-bold ${t.type === 'expense' ? 'text-red-400' : 'text-green-400'
-                              }`}>
-                              {t.type === 'expense' ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
-                            </p>
-                            <div className="flex items-center gap-3 mt-1">
-                              <p className="text-xs text-slate-500">{t.currency}</p>
-                              <button
-                                onClick={() => deleteTransaction(t.id)}
-                                className="text-slate-600 hover:text-red-400 transition-colors"
-                                title="Elimina transazione"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
+                                  <div className="text-right ml-4 flex flex-col items-end">
+                                    <p className={`text-xl font-bold ${t.type === 'expense' ? 'text-red-400' : 'text-green-400'}`}>
+                                      {t.type === 'expense' ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <p className="text-xs text-slate-500">{t.currency}</p>
+                                      <button
+                                        onClick={() => deleteTransaction(t.id)}
+                                        className="text-slate-600 hover:text-red-400 transition-colors"
+                                        title="Elimina transazione"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
                     )
