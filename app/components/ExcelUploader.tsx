@@ -15,7 +15,7 @@ type ParsedTransaction = {
 
 type ExcelUploaderProps = {
     categories: Category[]
-    onImportComplete: () => void
+    onImportComplete: (lastTransactionDate?: Date) => void
 }
 
 export default function ExcelUploader({ categories, onImportComplete }: ExcelUploaderProps) {
@@ -156,8 +156,18 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
             }
 
             setImportResult({ imported: result.imported, skipped: result.skipped })
+
+            // Find the most recent date from the imported data to switch view
+            let latestDate: Date | undefined
+            if (parsedData.length > 0) {
+                // Parse dates and find max
+                const dates = parsedData.map(t => new Date(t.date).getTime())
+                const maxDate = Math.max(...dates)
+                latestDate = new Date(maxDate)
+            }
+
             setParsedData([])
-            onImportComplete()
+            onImportComplete(latestDate)
         } catch (err: any) {
             setError(err.message)
         } finally {

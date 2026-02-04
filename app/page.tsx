@@ -489,7 +489,14 @@ export default function Home() {
           <div className="space-y-6">
             <ExcelUploader
               categories={categories}
-              onImportComplete={() => fetchTransactions()}
+              onImportComplete={(importedDate) => {
+                fetchTransactions()
+                if (importedDate) {
+                  setSelectedDate(importedDate)
+                  setActiveTab('transactions')
+                  addLog('info', `📅 Vista aggiornata al mese di ${importedDate.toLocaleString('it-IT', { month: 'long' })}`)
+                }
+              }}
             />
           </div>
         )}
