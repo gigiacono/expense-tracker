@@ -131,10 +131,15 @@ expense-tracker/
 - **Excel Parsing**: xlsx
 - **Deploy**: Vercel
 - **Language**: TypeScript
+- **Font**: Montserrat (Google Fonts)
 
 ---
 
 ## 📝 Changelog
+
+### v1.3.2 (04/02/2026)
+- 🅰️ **Nuovo Font**: App ridisegnata con tipografia **Montserrat**
+- 💅 **UI Polish**: Migliorata leggibilità generale
 
 ### v1.3.1 (04/02/2026)
 - 📅 **Raggruppamento Giornaliero**: Lista transazioni divisa per giorno con totale netto giornaliero
