@@ -136,6 +136,11 @@ expense-tracker/
 
 ## 📝 Changelog
 
+### v1.3.1 (04/02/2026)
+- 📅 **Raggruppamento Giornaliero**: Lista transazioni divisa per giorno con totale netto giornaliero
+- 🎨 **UI Cleanup**: Spostato Debug Log in Impostazioni per una Home più pulita
+- ➖ **Formattazione**: Migliorata visualizzazione spese negative (es: -€50.00)
+
 ### v1.3.0 (04/02/2026)
 - ➕ **Menu Unificato**: Nuovo FAB button per Add Manuale e Import File
 - 📈 **Nuovo Chart**: Area Chart SVG per visualizzare l'andamento del saldo annuale
