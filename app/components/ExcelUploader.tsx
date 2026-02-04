@@ -47,16 +47,21 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 // Mappa al nostro formato
                 const transactions: ParsedTransaction[] = jsonData
                     .filter(row => row.State === 'COMPLETED' && row.Amount !== undefined)
-                    .map((row, index) => {
+                    .map((row) => {
                         const amount = Number(row.Amount)
                         const date = row['Completed Date'] || row['Started Date']
+                        const description = row.Description || 'Nessuna descrizione'
 
-                        // Crea un ID univoco basato sui dati della transazione
-                        const revolutId = `rev_${new Date(date).getTime()}_${index}_${Math.abs(amount * 100).toFixed(0)}`
+                        // Crea un ID deterministico basato sui dati della transazione
+                        // Questo permette di rilevare duplicati anche tra import diversi
+                        const dateStr = new Date(date).toISOString().split('T')[0]
+                        const amountStr = Math.abs(amount * 100).toFixed(0)
+                        const descHash = description.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+                        const revolutId = `rev_${dateStr}_${amountStr}_${descHash}`
 
                         return {
-                            date: new Date(date).toISOString().split('T')[0],
-                            description: row.Description || 'Nessuna descrizione',
+                            date: dateStr,
+                            description: description,
                             amount: Math.abs(amount),
                             currency: row.Currency || 'EUR',
                             type: amount < 0 ? 'expense' : 'income',
