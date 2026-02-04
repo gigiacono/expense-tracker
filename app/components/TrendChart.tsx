@@ -6,11 +6,11 @@ type TrendChartProps = {
 }
 
 export default function TrendChart({ transactions, currentDate }: TrendChartProps) {
-    // 1. Generate last 6 months keys
+    // 1. Generate months for the current year (Jan - Dec)
+    const currentYear = currentDate.getFullYear()
     const months = []
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(currentDate)
-        d.setMonth(d.getMonth() - i)
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(currentYear, i, 1)
         months.push(d)
     }
 
@@ -49,7 +49,7 @@ export default function TrendChart({ transactions, currentDate }: TrendChartProp
     return (
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-6">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                📈 Andamento (ultimi 6 mesi)
+                📈 Andamento {currentYear}
             </h3>
 
             <div className="h-48 flex items-end justify-between gap-2">
