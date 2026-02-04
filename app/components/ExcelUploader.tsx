@@ -44,13 +44,25 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 // Converti in JSON
                 const jsonData = XLSX.utils.sheet_to_json<RevolutTransaction>(worksheet)
 
+                console.log('📊 Righe trovate nel file:', jsonData.length)
+                console.log('📄 Prima riga:', jsonData[0])
+                console.log('🔑 Colonne trovate:', jsonData.length > 0 ? Object.keys(jsonData[0]) : 'nessuna')
+
+                if (jsonData.length === 0) {
+                    setError('Il file sembra vuoto o non contiene dati validi.')
+                    setIsLoading(false)
+                    return
+                }
+
                 // Mappa al nostro formato - supporta sia colonne in italiano che inglese
                 const transactions: ParsedTransaction[] = jsonData
                     .filter(row => {
                         // Controlla State in inglese o italiano (COMPLETED/COMPLETATO)
-                        const state = row.State || ''
-                        return (state === 'COMPLETED' || state === 'COMPLETATO') &&
-                            (row.Amount !== undefined || row.Importo !== undefined)
+                        const state = (row.State || '').toString().toUpperCase()
+                        const hasAmount = row.Amount !== undefined || row.Importo !== undefined
+                        const isCompleted = state === 'COMPLETED' || state === 'COMPLETATO'
+                        console.log(`🔍 Riga: state="${state}", hasAmount=${hasAmount}, isCompleted=${isCompleted}`)
+                        return isCompleted && hasAmount
                     })
                     .map((row) => {
                         // Supporta sia nomi inglesi che italiani
@@ -60,12 +72,16 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                         const description = row.Description || row.Descrizione || 'Nessuna descrizione'
                         const currency = row.Currency || row.Valuta || 'EUR'
 
-                        // Crea un ID deterministico basato sui dati della transazione
-                        // Questo permette di rilevare duplicati anche tra import diversi
-                        const dateStr = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                        // Crea un ID deterministico BASATO SUL TIMESTAMP COMPLETO (Data + Ora)
+                        // L'orario è cruciale per distinguere transazioni identiche nello stesso giorno
+                        const timestamp = new Date(date).getTime()
+                        const dateStr = new Date(date).toISOString().split('T')[0]
                         const amountStr = Math.abs(amount * 100).toFixed(0)
+                        const balanceStr = (row.Balance || row.Saldo) ? Math.abs(Number(row.Balance || row.Saldo) * 100).toFixed(0) : '0'
                         const descHash = description.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-                        const revolutId = `rev_${dateStr}_${amountStr}_${descHash}`
+
+                        // ID univoco: stamp + importo + saldo + descrizione
+                        const revolutId = `rev_${timestamp}_${amountStr}_${balanceStr}_${descHash}`
 
                         return {
                             date: dateStr,
@@ -77,8 +93,15 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                         }
                     })
 
+                console.log('✅ Transazioni valide:', transactions.length)
+
+                if (transactions.length === 0) {
+                    setError(`Nessuna transazione valida trovata. Verifica che il file contenga transazioni con stato COMPLETATO. Righe totali nel file: ${jsonData.length}`)
+                }
+
                 setParsedData(transactions)
             } catch (err: any) {
+                console.error('❌ Errore parsing:', err)
                 setError(`Errore nel parsing del file: ${err.message}`)
             } finally {
                 setIsLoading(false)
