@@ -23,10 +23,34 @@ export async function POST(request: NextRequest) {
 
     console.log(`📥 Ricevute ${transactions.length} transazioni da importare`)
 
+    // 1. Fetch di tutte le regole di categorizzazione
+    const { data: rules } = await supabaseAdmin
+      .from('merchant_rules')
+      .select('merchant_pattern, category_id')
+
+    // 2. Applica le regole alle transazioni
+    const categorizedTransactions = transactions.map((t: any) => {
+      // Se ha già una categoria (es. manuale), mantienila
+      if (t.category_id) return t
+
+      // Cerca una regola che matcha
+      const rule = rules?.find(r =>
+        t.description && t.description.toUpperCase().includes(r.merchant_pattern.toUpperCase())
+      )
+
+      if (rule) {
+        return { ...t, category_id: rule.category_id }
+      }
+
+      return t
+    })
+
+    console.log(`🧠 Applicate regole automatiche prima dell'import`)
+
     // Insert con upsert per evitare duplicati
     const { data, error } = await supabaseAdmin
       .from('transactions')
-      .upsert(transactions, {
+      .upsert(categorizedTransactions, {
         onConflict: 'revolut_id',
         ignoreDuplicates: true
       })
