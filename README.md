@@ -1,36 +1,172 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 Expense Tracker
 
-## Getting Started
+Un'applicazione moderna per il tracciamento delle spese personali, costruita con Next.js 16, Supabase e TailwindCSS.
 
-First, run the development server:
+**Live Demo**: [expense-tracker-chi-gray.vercel.app](https://expense-tracker-chi-gray.vercel.app/)
 
+![Expense Tracker Screenshot](https://img.shields.io/badge/Next.js-16-black?logo=next.js) ![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase) ![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)
+
+---
+
+## ✨ Funzionalità
+
+### 📤 Import Excel Revolut
+- Carica file Excel/CSV esportati da Revolut
+- Drag & drop o click per selezionare file
+- Anteprima transazioni prima dell'import
+- Gestione automatica duplicati
+
+### 🏷️ Sistema Categorie
+- Crea, modifica ed elimina categorie personalizzate
+- Icone e colori personalizzabili
+- Categorie predefinite: Spesa, Trasporti, Casa, Ristoranti, Shopping, Salute, Intrattenimento
+
+### 🔗 Auto-categorizzazione (Regole Enti)
+- Associa parole chiave a categorie (es: "AMAZON" → Shopping)
+- Applica automaticamente a transazioni esistenti
+- Categorizzazione automatica su nuovi import
+
+### ✏️ Inserimento Manuale Spese
+- Form completo per transazioni manuali
+- Selezione tipo: Spesa o Entrata
+- Data, descrizione, importo e categoria
+
+### 📊 Saldo Mensile
+- Inserisci saldo inizio e fine mese
+- Confronto variazione attesa vs reale
+- Navigazione tra mesi
+- Rileva discrepanze tra transazioni registrate e saldo reale
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisiti
+- Node.js 18+
+- Account Supabase
+- (Opzionale) Account Vercel per deploy
+
+### Installazione
+
+1. **Clona il repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/gigiacono/expense-tracker.git
+cd expense-tracker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Installa dipendenze**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Configura variabili d'ambiente**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Crea un file `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_service_key
+N8N_API_KEY=your_api_key
+```
 
-## Learn More
+4. **Setup Database**
 
-To learn more about Next.js, take a look at the following resources:
+Esegui lo script SQL in `database/migration.sql` nel SQL Editor di Supabase.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Avvia in development**
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Apri [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗄️ Struttura Database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tabelle
+
+| Tabella | Descrizione |
+|---------|-------------|
+| `transactions` | Transazioni (spese/entrate) |
+| `categories` | Categorie personalizzabili |
+| `merchant_rules` | Regole auto-categorizzazione |
+| `monthly_balances` | Saldi mensili |
+
+### Schema
+Vedi [`database/migration.sql`](database/migration.sql) per lo schema completo.
+
+---
+
+## 📁 Struttura Progetto
+
+```
+expense-tracker/
+├── app/
+│   ├── api/
+│   │   └── import/          # API per import transazioni
+│   ├── components/
+│   │   ├── CategoryManager.tsx
+│   │   ├── ExcelUploader.tsx
+│   │   ├── MerchantRuleManager.tsx
+│   │   ├── MonthlyBalanceCard.tsx
+│   │   └── TransactionForm.tsx
+│   ├── layout.tsx
+│   └── page.tsx             # Pagina principale
+├── lib/
+│   ├── supabase.ts          # Client Supabase
+│   └── types.ts             # TypeScript types
+├── database/
+│   └── migration.sql        # Script migrazione DB
+└── public/                  # Assets statici
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: TailwindCSS 4
+- **Excel Parsing**: xlsx
+- **Deploy**: Vercel
+- **Language**: TypeScript
+
+---
+
+## 📝 Changelog
+
+### v1.1.0 (04/02/2026)
+- ✅ Import Excel Revolut con drag & drop
+- ✅ Sistema categorie con icone e colori
+- ✅ Regole auto-categorizzazione per enti
+- ✅ Inserimento manuale transazioni
+- ✅ Gestione saldi mensili
+- ✅ Tema scuro con gradienti
+- ✅ Pannello debug log
+- ✅ Fix leggibilità campi input
+
+### v1.0.0
+- Dashboard base con totali
+- Lista transazioni
+- API import
+
+---
+
+## 🤝 Contributing
+
+1. Fork il repository
+2. Crea un branch (`git checkout -b feature/nuova-funzionalita`)
+3. Commit (`git commit -m 'Aggiunge nuova funzionalità'`)
+4. Push (`git push origin feature/nuova-funzionalita`)
+5. Apri una Pull Request
+
+---
+
+## 📄 License
+
+MIT License - vedi [LICENSE](LICENSE) per dettagli.
+
+---
+
+Sviluppato con ❤️ usando Next.js e Supabase
