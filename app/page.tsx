@@ -535,6 +535,7 @@ export default function Home() {
             <div className="space-y-6">
               <MonthlyBalanceCard
                 transactionsTotal={{ income: totalIncome, expense: totalExpenses }}
+                onUpdate={fetchMonthlyBalances}
               />
 
               {/* Danger Zone */}

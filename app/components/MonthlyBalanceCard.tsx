@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 
 type MonthlyBalanceCardProps = {
     transactionsTotal: { income: number; expense: number }
+    onUpdate?: () => void
 }
 
 const MONTH_NAMES = [
@@ -13,7 +14,7 @@ const MONTH_NAMES = [
     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ]
 
-export default function MonthlyBalanceCard({ transactionsTotal }: MonthlyBalanceCardProps) {
+export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: MonthlyBalanceCardProps) {
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -73,6 +74,7 @@ export default function MonthlyBalanceCard({ transactionsTotal }: MonthlyBalance
 
             setIsEditing(false)
             fetchBalance()
+            if (onUpdate) onUpdate()
         } catch (err: any) {
             setError(err.message)
         } finally {
