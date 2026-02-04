@@ -64,6 +64,6 @@ export type RevolutTransaction = {
   Importo?: number
   Costo?: number
   Valuta?: string
+  Stato?: string
   Saldo?: number
 }
-

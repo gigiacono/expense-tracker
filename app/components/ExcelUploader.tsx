@@ -71,7 +71,7 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 const transactions: ParsedTransaction[] = jsonData
                     .filter(row => {
                         // Controlla State in inglese o italiano (COMPLETED/COMPLETATO)
-                        const state = (row.State || '').toString().toUpperCase()
+                        const state = (row.State || row.Stato || '').toString().toUpperCase()
                         const hasAmount = row.Amount !== undefined || row.Importo !== undefined
                         const isCompleted = state === 'COMPLETED' || state === 'COMPLETATO'
 

@@ -1,0 +1,67 @@
+Tipo,Prodotto,Data di inizio,Data di completamento,Descrizione,Importo,Costo,Valuta,State,Saldo
+Pagamento con carta,Attuale,2025-12-31 14:46:12,2026-01-01 12:47:43,La Tinaia,-20.00,0.00,EUR,COMPLETATO,12.08
+Pagamento con carta,Attuale,2025-12-30 20:17:43,2026-01-01 12:58:19,Eredi Di Matarese Armand,-16.00,0.00,EUR,COMPLETATO,-3.92
+Pagamento,Attuale,2026-01-02 13:06:17,2026-01-02 13:06:17,Da EUR Conto deposito senza vincoli,50.00,0.00,EUR,COMPLETATO,46.08
+Pagamento,Attuale,2026-01-08 07:07:11,2026-01-08 07:07:11,Da EUR Conto deposito senza vincoli,277.94,0.00,EUR,COMPLETATO,324.02
+Pagamento,Attuale,2026-01-08 07:07:11,2026-01-08 07:07:12,To Luigi Iacono,-277.94,0.00,EUR,COMPLETATO,46.08
+Ricarica,Attuale,2026-01-09 10:02:10,2026-01-09 10:05:50,Ricarica di *0348,1742.00,0.00,EUR,COMPLETATO,1788.08
+Pagamento,Attuale,2026-01-09 10:06:23,2026-01-09 10:06:24,A EUR Conto deposito senza vincoli,-1188.00,0.00,EUR,COMPLETATO,600.08
+Pagamento con carta,Attuale,2026-01-09 19:47:48,2026-01-10 11:45:27,Brico Io,-110.50,0.00,EUR,COMPLETATO,489.58
+Pagamento con carta,Attuale,2026-01-10 13:11:17,2026-01-10 16:56:14,Temu,-25.36,0.00,EUR,COMPLETATO,464.22
+Pagamento con carta,Attuale,2026-01-10 13:15:03,2026-01-10 16:56:15,Temu,-5.46,0.00,EUR,COMPLETATO,458.76
+Pagamento con carta,Attuale,2026-01-10 17:57:06,2026-01-11 10:48:57,Temu,-5.46,0.00,EUR,COMPLETATO,453.30
+Pagamento con carta,Attuale,2026-01-10 19:26:16,2026-01-11 14:38:29,Supermercati Dok,-9.57,0.00,EUR,COMPLETATO,443.73
+Pagamento con carta,Attuale,2026-01-10 12:40:58,2026-01-11 14:40:41,Tsunami Nutrition,-55.12,0.00,EUR,COMPLETATO,388.61
+Pagamento con carta,Attuale,2026-01-13 21:42:25,2026-01-14 13:17:20,Gymshark,-52.90,0.00,EUR,COMPLETATO,335.71
+Pagamento con carta,Attuale,2026-01-15 08:18:11,2026-01-16 11:48:38,La Lucciola,-5.10,0.00,EUR,COMPLETATO,330.61
+Pagamento con carta,Attuale,2026-01-16 08:44:52,2026-01-17 13:23:10,Supermercati Dok,-12.20,0.00,EUR,COMPLETATO,318.41
+Pagamento con carta,Attuale,2026-01-17 13:12:58,2026-01-18 10:22:22,Supermercati Dok,-12.83,0.00,EUR,COMPLETATO,305.58
+Pagamento,Attuale,2026-01-18 17:57:20,2026-01-18 17:57:22,To Comando Polizia Municipale Di Forio,-39.40,0.00,EUR,COMPLETATO,266.18
+Pagamento con carta,Attuale,2026-01-17 16:36:45,2026-01-19 10:17:41,Evolution,-180.00,0.00,EUR,COMPLETATO,86.18
+Pagamento con carta,Attuale,2026-01-19 20:35:41,2026-01-20 12:16:49,Tsunami Nutrition,-32.44,0.00,EUR,COMPLETATO,53.74
+Pagamento con carta,Attuale,2026-01-19 00:35:06,2026-01-20 13:01:32,Eni,-30.10,0.00,EUR,COMPLETATO,23.64
+Pagamento con carta,Attuale,2026-01-20 08:40:39,2026-01-21 12:20:23,Supermercati Dok,-5.05,0.00,EUR,COMPLETATO,18.59
+Pagamento,Attuale,2026-01-21 19:57:55,2026-01-21 19:57:55,Da EUR Conto deposito senza vincoli,50.00,0.00,EUR,COMPLETATO,68.59
+Pagamento con carta,Attuale,2026-01-21 19:09:46,2026-01-22 10:52:29,Brico Io,-14.75,0.00,EUR,COMPLETATO,53.84
+Pagamento con carta,Attuale,2026-01-21 19:58:07,2026-01-22 10:52:35,Supermercati Dok,-14.09,0.00,EUR,COMPLETATO,39.75
+Pagamento con carta,Attuale,2026-01-27 08:39:45,2026-01-28 11:36:36,Supermercati Dok,-14.28,0.00,EUR,COMPLETATO,25.47
+Pagamento,Attuale,2026-01-30 22:31:05,2026-01-30 22:31:05,Da EUR Conto deposito senza vincoli,866.00,0.00,EUR,COMPLETATO,891.47
+Pagamento,Attuale,2026-01-30 22:31:05,2026-01-30 22:31:07,To Maria Matarese,-866.00,0.00,EUR,COMPLETATO,25.47
+Pagamento,Attuale,2026-01-31 21:19:06,2026-01-31 21:19:06,Da EUR Conto deposito senza vincoli,314.00,0.00,EUR,COMPLETATO,339.47
+Interessi,Deposito,2026-01-01 02:38:22,2026-01-01 02:38:22,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7593.30
+Interessi,Deposito,2026-01-02 02:38:48,2026-01-02 02:38:48,Interest earned - Conto deposito senza vincoli,0.32,0.08,EUR,COMPLETATO,7593.54
+Pagamento,Deposito,2026-01-02 13:06:17,2026-01-02 13:06:17,Da EUR Conto deposito senza vincoli,-50.00,0.00,EUR,COMPLETATO,7543.54
+Interessi,Deposito,2026-01-03 03:00:14,2026-01-03 03:00:14,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7543.77
+Interessi,Deposito,2026-01-04 02:39:41,2026-01-04 02:39:41,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7544.00
+Interessi,Deposito,2026-01-05 02:41:35,2026-01-05 02:41:35,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7544.23
+Interessi,Deposito,2026-01-06 02:48:14,2026-01-06 02:48:14,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7544.46
+Interessi,Deposito,2026-01-07 02:17:01,2026-01-07 02:17:01,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7544.69
+Interessi,Deposito,2026-01-08 02:51:03,2026-01-08 02:51:03,Interest earned - Conto deposito senza vincoli,0.31,0.08,EUR,COMPLETATO,7544.92
+Pagamento,Deposito,2026-01-08 07:07:11,2026-01-08 07:07:11,Da EUR Conto deposito senza vincoli,-277.94,0.00,EUR,COMPLETATO,7266.98
+Interessi,Deposito,2026-01-09 02:21:34,2026-01-09 02:21:34,Interest earned - Conto deposito senza vincoli,0.29,0.08,EUR,COMPLETATO,7267.19
+Pagamento,Deposito,2026-01-09 10:06:23,2026-01-09 10:06:24,A EUR Conto deposito senza vincoli,1188.00,0.00,EUR,COMPLETATO,8455.19
+Interessi,Deposito,2026-01-10 02:27:39,2026-01-10 02:27:39,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8455.45
+Interessi,Deposito,2026-01-11 02:23:56,2026-01-11 02:23:56,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8455.71
+Interessi,Deposito,2026-01-12 02:33:53,2026-01-12 02:33:53,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8455.97
+Interessi,Deposito,2026-01-13 02:20:40,2026-01-13 02:20:40,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8456.22
+Interessi,Deposito,2026-01-14 02:48:55,2026-01-14 02:48:55,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8456.48
+Interessi,Deposito,2026-01-15 02:32:25,2026-01-15 02:32:25,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8456.74
+Interessi,Deposito,2026-01-16 02:32:04,2026-01-16 02:32:04,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8457.00
+Interessi,Deposito,2026-01-17 02:37:40,2026-01-17 02:37:40,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8457.25
+Interessi,Deposito,2026-01-18 02:32:48,2026-01-18 02:32:48,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8457.51
+Interessi,Deposito,2026-01-19 02:36:32,2026-01-19 02:36:32,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8457.77
+Interessi,Deposito,2026-01-20 02:55:23,2026-01-20 02:55:23,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8458.03
+Interessi,Deposito,2026-01-21 02:26:43,2026-01-21 02:26:43,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8458.28
+Pagamento,Deposito,2026-01-21 19:57:55,2026-01-21 19:57:55,Da EUR Conto deposito senza vincoli,-50.00,0.00,EUR,COMPLETATO,8408.28
+Interessi,Deposito,2026-01-22 02:31:23,2026-01-22 02:31:23,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8408.54
+Interessi,Deposito,2026-01-23 02:55:12,2026-01-23 02:55:12,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8408.80
+Interessi,Deposito,2026-01-24 02:31:09,2026-01-24 02:31:09,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8409.05
+Interessi,Deposito,2026-01-25 02:36:25,2026-01-25 02:36:25,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8409.31
+Interessi,Deposito,2026-01-26 02:36:20,2026-01-26 02:36:20,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8409.56
+Interessi,Deposito,2026-01-27 02:47:58,2026-01-27 02:47:58,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8409.82
+Interessi,Deposito,2026-01-28 03:00:20,2026-01-28 03:00:20,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8410.07
+Interessi,Deposito,2026-01-29 02:52:02,2026-01-29 02:52:02,Interest earned - Conto deposito senza vincoli,0.35,0.09,EUR,COMPLETATO,8410.33
+Interessi,Deposito,2026-01-30 02:41:44,2026-01-30 02:41:44,Interest earned - Conto deposito senza vincoli,0.34,0.09,EUR,COMPLETATO,8410.58
+Pagamento,Deposito,2026-01-30 22:31:05,2026-01-30 22:31:05,Da EUR Conto deposito senza vincoli,-866.00,0.00,EUR,COMPLETATO,7544.58
+Interessi,Deposito,2026-01-31 02:32:36,2026-01-31 02:32:36,Interest earned - Conto deposito senza vincoli,0.32,0.08,EUR,COMPLETATO,7544.82
+Pagamento,Deposito,2026-01-31 21:19:06,2026-01-31 21:19:06,Da EUR Conto deposito senza vincoli,-314.00,0.00,EUR,COMPLETATO,7230.82
