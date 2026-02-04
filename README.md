@@ -136,6 +136,13 @@ expense-tracker/
 
 ## 📝 Changelog
 
+### v1.1.2 (04/02/2026)
+- ✨ **Aggiornamento Intelligente Categorie**: Applicando una categoria, l'app propone di aggiornare tutte le transazioni simili e creare una regola futura
+- 🧹 **Elimina Tutto**: Nuova "Zona Pericolo" in Impostazioni per resettare il database
+- 🔍 **Rilevamento Duplicati Migliorato**: ID transazioni basati su timestamp preciso e saldo per evitare falsi positivi
+- 🇮🇹 **Supporto CSV Italiano**: Riconoscimento automatico colonne Revolut in italiano
+- 🎨 **Miglioramenti UI**: Input più leggibili e fix minori
+
 ### v1.1.0 (04/02/2026)
 - ✅ Import Excel Revolut con drag & drop
 - ✅ Sistema categorie con icone e colori
@@ -144,7 +151,6 @@ expense-tracker/
 - ✅ Gestione saldi mensili
 - ✅ Tema scuro con gradienti
 - ✅ Pannello debug log
-- ✅ Fix leggibilità campi input
 
 ### v1.0.0
 - Dashboard base con totali
