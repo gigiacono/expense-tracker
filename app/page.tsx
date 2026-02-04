@@ -98,19 +98,61 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [fetchTransactions, fetchCategories, fetchRules, addLog])
 
-  const updateTransactionCategory = async (transactionId: string, categoryId: string | null) => {
+  const updateTransactionCategory = async (transaction: Transaction, categoryId: string | null) => {
     try {
+      // 1. Aggiorna la singola transazione
       const { error } = await supabase
         .from('transactions')
         .update({ category_id: categoryId })
-        .eq('id', transactionId)
+        .eq('id', transaction.id)
 
       if (error) throw error
 
       setEditingTransaction(null)
       fetchTransactions()
+
+      // 2. Se abbiamo selezionato una categoria, chiedi se applicare a tutte
+      if (categoryId) {
+        const category = categories.find(c => c.id === categoryId)
+        if (category && confirm(`Vuoi applicare la categoria "${category.name}" a tutte le transazioni future di "${transaction.description}"?`)) {
+          addLog('info', `🔄 Applicazione regola per "${transaction.description}"...`)
+
+          // Crea regola per il futuro
+          const { error: ruleError } = await supabase
+            .from('merchant_rules')
+            .upsert({
+              merchant_pattern: transaction.description,
+              category_id: categoryId
+            }, { onConflict: 'merchant_pattern' })
+            .select()
+
+          if (!ruleError) {
+            // Applica a tutte le transazioni passate con la stessa descrizione
+            await supabase
+              .from('transactions')
+              .update({ category_id: categoryId })
+              .eq('description', transaction.description)
+              .is('category_id', null) // Aggiorna solo quelle non categorizzate? O tutte? Meglio tutte per coerenza.
+
+            // Rimuovo il filtro .is('category_id', null) per forzare l'aggiornamento su tutte
+            await supabase
+              .from('transactions')
+              .update({ category_id: categoryId })
+              .eq('description', transaction.description)
+
+            addLog('success', `✅ Regola creata e applicata a tutte le transazioni di "${transaction.description}"`)
+            fetchTransactions()
+            fetchRules()
+          } else {
+            console.error('Errore creazione regola:', ruleError)
+            addLog('error', `❌ Errore creazione regola: ${ruleError.message}`)
+          }
+        }
+      }
+
     } catch (err: any) {
       console.error('❌ Errore update:', err)
+      addLog('error', `❌ Errore aggiornamento: ${err.message}`)
     }
   }
 
@@ -309,7 +351,7 @@ export default function Home() {
                               {editingTransaction === t.id ? (
                                 <select
                                   value={t.category_id || ''}
-                                  onChange={(e) => updateTransactionCategory(t.id, e.target.value || null)}
+                                  onChange={(e) => updateTransactionCategory(t, e.target.value || null)}
                                   onBlur={() => setEditingTransaction(null)}
                                   autoFocus
                                   className="bg-slate-700 text-white px-2 py-0.5 rounded text-sm border border-slate-600"
