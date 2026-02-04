@@ -54,6 +54,19 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                     return
                 }
 
+                // Helper per parsare date Excel (possono essere numeri o stringhe)
+                const parseExcelDate = (input: any): Date => {
+                    if (typeof input === 'number') {
+                        // Excel serial date -> JS Date
+                        // (Value - 25569) * 86400 * 1000
+                        return new Date((input - 25569) * 86400 * 1000)
+                    }
+                    // Prova a parsare come stringa
+                    const d = new Date(input)
+                    // Se invalida, ritorna data attuale (fallback)
+                    return isNaN(d.getTime()) ? new Date() : d
+                }
+
                 // Mappa al nostro formato - supporta sia colonne in italiano che inglese
                 const transactions: ParsedTransaction[] = jsonData
                     .filter(row => {
@@ -67,15 +80,20 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                     .map((row) => {
                         // Supporta sia nomi inglesi che italiani
                         const amount = Number(row.Amount ?? row.Importo ?? 0)
-                        const date = row['Completed Date'] || row['Data di completamento'] ||
-                            row['Started Date'] || row['Data di inizio'] || ''
+
+                        // Priorità alla data di completamento, fallback inizio, fallback oggi
+                        const rawDate = row['Completed Date'] || row['Data di completamento'] ||
+                            row['Started Date'] || row['Data di inizio'] || new Date()
+
+                        const transDate = parseExcelDate(rawDate)
+
                         const description = row.Description || row.Descrizione || 'Nessuna descrizione'
                         const currency = row.Currency || row.Valuta || 'EUR'
 
                         // Crea un ID deterministico BASATO SUL TIMESTAMP COMPLETO (Data + Ora)
                         // L'orario è cruciale per distinguere transazioni identiche nello stesso giorno
-                        const timestamp = new Date(date).getTime()
-                        const dateStr = new Date(date).toISOString().split('T')[0]
+                        const timestamp = transDate.getTime()
+                        const dateStr = transDate.toISOString().split('T')[0]
                         const amountStr = Math.abs(amount * 100).toFixed(0)
                         const balanceStr = (row.Balance || row.Saldo) ? Math.abs(Number(row.Balance || row.Saldo) * 100).toFixed(0) : '0'
                         const descHash = description.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
