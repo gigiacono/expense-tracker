@@ -137,6 +137,10 @@ expense-tracker/
 
 ## 📝 Changelog
 
+### v1.3.4 (04/02/2026)
+- ✏️ **Edit Mode**: Modifica completa transazioni (Data, Descrizione, Importo)
+- ⚡️ **Quick Add**: Resa opzionale la descrizione nell'inserimento manuale
+
 ### v1.3.3 (04/02/2026)
 - 🧠 **Smart Categorization UX**: Nuova finestra modale per scegliere tra modifica singola o massiva (regola)
 - ⚡️ **Feedback Immediato**: UI ottimizzata per la creazione regole
