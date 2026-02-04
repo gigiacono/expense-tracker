@@ -11,6 +11,7 @@ import MonthlyBalanceCard from './components/MonthlyBalanceCard'
 import MonthlyReport from './components/MonthlyReport'
 import TrendChart from './components/TrendChart'
 import CategorizationModal from './components/CategorizationModal'
+import EditTransactionModal from './components/EditTransactionModal'
 
 type Tab = 'transactions' | 'import' | 'settings'
 
@@ -33,6 +34,9 @@ export default function Home() {
 
   // Modal state for categorization choice
   const [pendingCategorization, setPendingCategorization] = useState<{ t: Transaction, c: Category } | null>(null)
+
+  // Modal state for editing transaction
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
 
   const addLog = useCallback((type: LogEntry['type'], message: string) => {
     const time = new Date().toLocaleTimeString('it-IT')
@@ -522,6 +526,13 @@ export default function Home() {
                                     <div className="flex items-center gap-3 mt-1">
                                       <p className="text-xs text-slate-500">{t.currency}</p>
                                       <button
+                                        onClick={() => setTransactionToEdit(t)}
+                                        className="text-slate-600 hover:text-blue-400 transition-colors"
+                                        title="Modifica transazione"
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
                                         onClick={() => deleteTransaction(t.id)}
                                         className="text-slate-600 hover:text-red-400 transition-colors"
                                         title="Elimina transazione"
@@ -636,6 +647,17 @@ export default function Home() {
         category={pendingCategorization?.c || null}
         onClose={() => setPendingCategorization(null)}
         onConfirm={handleCategorizationConfirm}
+      />
+
+      <EditTransactionModal
+        isOpen={!!transactionToEdit}
+        transaction={transactionToEdit}
+        categories={categories}
+        onClose={() => setTransactionToEdit(null)}
+        onSuccess={(updatedTransaction) => {
+          fetchTransactions()
+          addLog('success', '✏️ Transazione aggiornata')
+        }}
       />
     </main>
   )
