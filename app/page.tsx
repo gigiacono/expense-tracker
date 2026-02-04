@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Transaction, Category, MerchantRule } from '@/lib/types'
+import { Transaction, Category, MerchantRule, MonthlyBalance } from '@/lib/types'
 import ExcelUploader from './components/ExcelUploader'
 import CategoryManager from './components/CategoryManager'
 import MerchantRuleManager from './components/MerchantRuleManager'
@@ -45,6 +45,9 @@ export default function Home() {
       return newDate
     })
   }
+
+  // New state for balance filtering
+  const [monthlyBalances, setMonthlyBalances] = useState<MonthlyBalance[]>([])
 
   const deleteTransaction = async (id: string) => {
     if (!confirm('Sei sicuro di voler eliminare questa transazione?')) return
@@ -124,11 +127,24 @@ export default function Home() {
     }
   }, [addLog])
 
+  const fetchMonthlyBalances = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('monthly_balances')
+        .select('*')
+
+      if (error) throw error
+      setMonthlyBalances(data || [])
+    } catch (err) {
+      console.error('Error fetching monthly balances:', err)
+    }
+  }, [])
+
   useEffect(() => {
     addLog('info', '🚀 App started, loading data...')
-    Promise.all([fetchTransactions(), fetchCategories(), fetchRules()])
+    Promise.all([fetchTransactions(), fetchCategories(), fetchRules(), fetchMonthlyBalances()])
       .finally(() => setLoading(false))
-  }, [fetchTransactions, fetchCategories, fetchRules, addLog])
+  }, [fetchTransactions, fetchCategories, fetchRules, fetchMonthlyBalances, addLog])
 
   const updateTransactionCategory = async (transaction: Transaction, categoryId: string | null) => {
     try {
@@ -314,6 +330,7 @@ export default function Home() {
             <TrendChart
               transactions={transactions}
               currentDate={selectedDate}
+              monthlyBalances={monthlyBalances}
             />
           </div>
         )}

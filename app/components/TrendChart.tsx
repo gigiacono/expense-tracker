@@ -1,11 +1,12 @@
-import { Transaction } from '@/lib/types'
+import { Transaction, MonthlyBalance } from '@/lib/types'
 
 type TrendChartProps = {
-    transactions: Transaction[] // All transactions
-    currentDate: Date // To determine the 6 months window
+    transactions: Transaction[] // Keeping for compatibility, though maybe unused now
+    currentDate: Date
+    monthlyBalances?: MonthlyBalance[]
 }
 
-export default function TrendChart({ transactions, currentDate }: TrendChartProps) {
+export default function TrendChart({ transactions, currentDate, monthlyBalances = [] }: TrendChartProps) {
     // 1. Generate months for the current year (Jan - Dec)
     const currentYear = currentDate.getFullYear()
     const months = []
@@ -14,42 +15,33 @@ export default function TrendChart({ transactions, currentDate }: TrendChartProp
         months.push(d)
     }
 
-    // 2. Aggregate data
+    // 2. Map balances to months
     const data = months.map(month => {
-        const monthKey = `${month.getFullYear()}-${month.getMonth()}`
-
-        // Filter transactions for this month
-        const monthTransactions = transactions.filter(t => {
-            const tDate = new Date(t.date)
-            return tDate.getMonth() === month.getMonth() &&
-                tDate.getFullYear() === month.getFullYear()
-        })
-
-        const income = monthTransactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0)
-
-        const expense = monthTransactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+        // Find balance for this specific month/year
+        const balanceRecord = monthlyBalances.find(mb =>
+            mb.month === month.getMonth() + 1 && // DB months are 1-12
+            mb.year === month.getFullYear()
+        )
 
         return {
             label: month.toLocaleDateString('it-IT', { month: 'short' }).toUpperCase(),
-            income,
-            expense
+            value: balanceRecord?.starting_balance || 0,
+            hasData: balanceRecord?.starting_balance !== undefined && balanceRecord.starting_balance !== null
         }
     })
 
     // Find max value for scaling
+    // Only consider months that actually have data to avoid skewing generic 0s?
+    // But if value is 0 it is 0.
     const maxValue = Math.max(
-        ...data.map(d => Math.max(d.income, d.expense)),
+        ...data.map(d => d.value),
         100 // Minimum scale
     )
 
     return (
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 p-6">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                📈 Andamento {currentYear}
+                📈 Andamento Saldo {currentYear}
             </h3>
 
             <div className="h-48 flex items-end justify-between gap-2">
@@ -59,28 +51,33 @@ export default function TrendChart({ transactions, currentDate }: TrendChartProp
                         <div className="w-full flex justify-center items-end gap-1 h-full relative">
                             {/* Values Tooltip */}
                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 p-2 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                <div className="text-green-400">+€{item.income.toFixed(0)}</div>
-                                <div className="text-red-400">-€{item.expense.toFixed(0)}</div>
+                                <div className="text-blue-400 font-bold">€{item.value.toFixed(2)}</div>
                             </div>
 
-                            {/* Income Bar */}
+                            {/* Balance Bar */}
                             <div
-                                className="w-3 bg-green-500/50 hover:bg-green-500 rounded-t-sm transition-all"
-                                style={{ height: `${(item.income / maxValue) * 100}%` }}
-                            />
-
-                            {/* Expense Bar */}
-                            <div
-                                className="w-3 bg-red-500/50 hover:bg-red-500 rounded-t-sm transition-all"
-                                style={{ height: `${(item.expense / maxValue) * 100}%` }}
-                            />
+                                className={`w-4 rounded-t-sm transition-all relative ${item.hasData ? 'bg-blue-500 hover:bg-blue-400' : 'bg-slate-700/30'
+                                    }`}
+                                style={{ height: `${Math.max((item.value / maxValue) * 100, item.hasData ? 2 : 2)}%` }} // Min 2% visibility
+                            >
+                                {/* Indicator for missing data */}
+                                {!item.hasData && (
+                                    <div className="absolute inset-0 flex items-center justify-center text-[8px] text-slate-500 transform -rotate-90">
+                                        N/A
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         {/* Label */}
-                        <span className="text-xs text-slate-500 font-medium">
+                        <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">
                             {item.label}
                         </span>
                     </div>
                 ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2 text-xs text-slate-400">
+                <span className="w-3 h-3 bg-blue-500 rounded-sm"></span> Saldo Iniziale Mensile
             </div>
         </div>
     )
