@@ -379,10 +379,38 @@ export default function Home() {
                 onTransactionsUpdated={() => fetchTransactions()}
               />
             </div>
-            <div>
+            <div className="space-y-6">
               <MonthlyBalanceCard
                 transactionsTotal={{ income: totalIncome, expense: totalExpenses }}
               />
+
+              {/* Danger Zone */}
+              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                  ☢️ Zona Pericolo
+                </h3>
+                <p className="text-slate-400 mb-4 text-sm">
+                  Queste azioni sono irreversibili. Procedi con cautela.
+                </p>
+                <button
+                  onClick={async () => {
+                    if (confirm('SEI SICURO? Questa azione cancellerà TUTTE le transazioni dal database. Non si può annullare.')) {
+                      addLog('info', '🗑️ Eliminazione di tutte le transazioni...')
+                      try {
+                        const { error } = await supabase.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+                        if (error) throw error
+                        addLog('success', '✅ Tutte le transazioni eliminate')
+                        fetchTransactions()
+                      } catch (err: any) {
+                        addLog('error', `❌ Errore eliminazione: ${err.message}`)
+                      }
+                    }
+                  }}
+                  className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  🗑️ Elimina TUTTE le transazioni
+                </button>
+              </div>
             </div>
           </div>
         )}
