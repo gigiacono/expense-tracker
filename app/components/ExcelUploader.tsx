@@ -74,7 +74,32 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                         const state = (row.State || '').toString().toUpperCase()
                         const hasAmount = row.Amount !== undefined || row.Importo !== undefined
                         const isCompleted = state === 'COMPLETED' || state === 'COMPLETATO'
-                        console.log(`🔍 Riga: state="${state}", hasAmount=${hasAmount}, isCompleted=${isCompleted}`)
+
+                        // FILTRO ESCLUSIONI RICHIESTE DALL'UTENTE
+                        const description = (row.Description || row.Descrizione || '').toUpperCase()
+                        const type = (row.Type || row.Tipo || '').toUpperCase()
+
+                        // 1. Escludi interessi
+                        const isInterest = description.includes('INTERESSI') || description.includes('INTEREST')
+
+                        // 2. Escludi spostamenti interni (risparmi, salvadanai, etc)
+                        const isInternalTransfer =
+                            description.includes('SAVINGS') ||
+                            description.includes('RISPARMI') ||
+                            description.includes('SALVADANAIO') ||
+                            description.includes('POCKET') ||
+                            description.includes('VAULT') ||
+                            description.includes('TO MY ACCOUNT') ||
+                            description.includes('FROM MY ACCOUNT')
+
+                        const shouldExclude = isInterest || isInternalTransfer
+
+                        if (shouldExclude) {
+                            console.log(`🚫 Transazione esclusa: ${description} (Interessi/Interno)`)
+                            return false
+                        }
+
+                        // console.log(`🔍 Riga: state="${state}", hasAmount=${hasAmount}, isCompleted=${isCompleted}`)
                         return isCompleted && hasAmount
                     })
                     .map((row) => {
