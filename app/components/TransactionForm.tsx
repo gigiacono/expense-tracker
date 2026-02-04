@@ -34,7 +34,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!description.trim() || !amount) return
+        if (!amount) return
 
         setIsLoading(true)
         setError(null)
@@ -197,7 +197,6 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Es: Cena al ristorante"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 outline-none transition-all"
-                                    required
                                 />
                             </div>
 
@@ -236,7 +235,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                             {/* Submit */}
                             <button
                                 type="submit"
-                                disabled={isLoading || !description.trim() || !amount}
+                                disabled={isLoading || !amount}
                                 className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg mt-4"
                             >
                                 {isLoading ? 'Salvataggio...' : 'Salva Transazione'}
