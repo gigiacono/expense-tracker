@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Transaction, Category } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-import { X, Check } from 'lucide-react'
+import { X, Check, Zap } from 'lucide-react'
 import { getCategoryIcon } from '@/app/lib/categoryIcons'
 
 type EditTransactionModalProps = {
@@ -27,6 +27,7 @@ export default function EditTransactionModal({
     const [type, setType] = useState<'expense' | 'income'>('expense')
     const [categoryId, setCategoryId] = useState('')
     const [isRecurring, setIsRecurring] = useState(false)
+    const [createRule, setCreateRule] = useState(false)
 
     const [isLoading, setIsLoading] = useState(false)
 
@@ -38,6 +39,7 @@ export default function EditTransactionModal({
             setType(transaction.type)
             setCategoryId(transaction.category_id || '')
             setIsRecurring(transaction.is_recurring || false)
+            setCreateRule(false)
         }
     }, [transaction, isOpen])
 
@@ -65,6 +67,18 @@ export default function EditTransactionModal({
                 .single()
 
             if (error) throw error
+
+            // Create Smart Rule if requested
+            if (createRule && description && categoryId) {
+                const { error: ruleError } = await supabase
+                    .from('merchant_rules')
+                    .insert({
+                        merchant_pattern: description,
+                        category_id: categoryId
+                    })
+
+                if (ruleError) console.error('Error creating smart rule:', ruleError)
+            }
 
             onSuccess(data)
             onClose()
@@ -153,7 +167,6 @@ export default function EditTransactionModal({
                             />
                         </div>
 
-                        {/* Recurring Toggle */}
                         <div className="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700">
                             <span className="text-sm text-slate-300">Ricorsivo (mensile)</span>
                             <button
@@ -162,6 +175,21 @@ export default function EditTransactionModal({
                                 className={`w-12 h-6 rounded-full transition-colors relative ${isRecurring ? 'bg-emerald-500' : 'bg-slate-600'}`}
                             >
                                 <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isRecurring ? 'translate-x-6' : ''}`}></div>
+                            </button>
+                        </div>
+
+                        {/* Smart Rule Toggle */}
+                        <div className="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700">
+                            <div className="flex items-center gap-2">
+                                <Zap size={16} className="text-yellow-400" />
+                                <span className="text-sm text-slate-300">Ricorda per il futuro</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setCreateRule(!createRule)}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${createRule ? 'bg-yellow-500' : 'bg-slate-600'}`}
+                            >
+                                <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${createRule ? 'translate-x-6' : ''}`}></div>
                             </button>
                         </div>
 
@@ -178,8 +206,8 @@ export default function EditTransactionModal({
                                             type="button"
                                             onClick={() => setCategoryId(cat.id)}
                                             className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isSelected
-                                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                                                 }`}
                                         >
                                             <Icon size={20} />
