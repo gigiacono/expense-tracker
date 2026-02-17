@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Expense Tracker",
   description: "Traccia le tue spese personali",
   manifest: "/manifest.json",
-  themeColor: "#000000",
+  themeColor: "#0f172a",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

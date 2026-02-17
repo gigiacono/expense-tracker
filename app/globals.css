@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Slate 900 - Background */
+  --background: #0f172a;
+  /* Slate 50 - Text */
+  --foreground: #f8fafc;
+
+  /* Custom Theme Colors */
+  --primary: #10b981;
+  /* Emerald 500 */
+  --primary-glow: rgba(16, 185, 129, 0.4);
+
+  --card-bg: #1e293b;
+  /* Slate 800 */
+  --card-border: #334155;
+  /* Slate 700 */
 }
 
 @theme inline {
@@ -10,17 +22,33 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-card: var(--card-bg);
+  --color-card-border: var(--card-border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling for a cleaner look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

@@ -11,6 +11,7 @@ export type Transaction = {
   category_id: string | null
   type: 'expense' | 'income'
   is_manual: boolean
+  is_recurring?: boolean
   created_at: string
 }
 

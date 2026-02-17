@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Transaction, Category } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
+import { X, Check } from 'lucide-react'
+import { getCategoryIcon } from '@/app/lib/categoryIcons'
 
 type EditTransactionModalProps = {
     isOpen: boolean
@@ -24,9 +26,9 @@ export default function EditTransactionModal({
     const [amount, setAmount] = useState<string | number>('')
     const [type, setType] = useState<'expense' | 'income'>('expense')
     const [categoryId, setCategoryId] = useState('')
+    const [isRecurring, setIsRecurring] = useState(false)
 
     const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         if (transaction && isOpen) {
@@ -35,7 +37,7 @@ export default function EditTransactionModal({
             setAmount(Math.abs(transaction.amount))
             setType(transaction.type)
             setCategoryId(transaction.category_id || '')
-            setError(null)
+            setIsRecurring(transaction.is_recurring || false)
         }
     }, [transaction, isOpen])
 
@@ -44,7 +46,6 @@ export default function EditTransactionModal({
         if (!amount || !transaction) return
 
         setIsLoading(true)
-        setError(null)
 
         try {
             const finalAmount = type === 'expense' ? -Math.abs(Number(amount)) : Math.abs(Number(amount))
@@ -52,11 +53,12 @@ export default function EditTransactionModal({
             const { data, error } = await supabase
                 .from('transactions')
                 .update({
-                    date,
+                    date: new Date(date).toISOString(),
                     description: description.trim(),
                     amount: finalAmount,
                     type,
-                    category_id: categoryId || null
+                    category_id: categoryId || null,
+                    is_recurring: isRecurring
                 })
                 .eq('id', transaction.id)
                 .select()
@@ -67,7 +69,8 @@ export default function EditTransactionModal({
             onSuccess(data)
             onClose()
         } catch (err: any) {
-            setError(err.message)
+            console.error(err)
+            alert('Errore aggiornamento')
         } finally {
             setIsLoading(false)
         }
@@ -76,124 +79,118 @@ export default function EditTransactionModal({
     if (!isOpen || !transaction) return null
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative animate-slideUp max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        ✏️ Modifica Transazione
-                    </h2>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+
+            <div className="bg-slate-900 w-full max-w-md rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="bg-slate-800 p-4 flex justify-between items-center text-white">
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-700/50">
+                        <X size={20} />
+                    </button>
+                    <h2 className="font-semibold">Modifica</h2>
                     <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="p-2 rounded-full bg-emerald-500 text-slate-900 hover:bg-emerald-400 disabled:opacity-50"
                     >
-                        <span className="text-gray-500 text-xl">✕</span>
+                        <Check size={20} className="stroke-[3]" />
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-                        ❌ {error}
-                    </div>
-                )}
+                <div className="p-6 overflow-y-auto space-y-6">
+                    {/* Amount Input */}
+                    <div className="text-center">
+                        <div className="flex justify-center items-center gap-2 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setType('expense')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors border ${type === 'expense' ? 'bg-red-500/20 border-red-500 text-red-400' : 'border-slate-700 text-slate-400'}`}
+                            >
+                                Uscita
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setType('income')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors border ${type === 'income' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'border-slate-700 text-slate-400'}`}
+                            >
+                                Entrata
+                            </button>
+                        </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Tipo */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setType('expense')}
-                            className={`py-3 rounded-xl font-bold transition-all border-2
-                  ${type === 'expense'
-                                    ? 'bg-red-50 border-red-500 text-red-600'
-                                    : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            💸 Spesa
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setType('income')}
-                            className={`py-3 rounded-xl font-bold transition-all border-2
-                  ${type === 'income'
-                                    ? 'bg-green-50 border-green-500 text-green-600'
-                                    : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            💰 Entrata
-                        </button>
-                    </div>
-
-                    {/* Data */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Data</label>
-                        <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 outline-none transition-all"
-                            required
-                        />
+                        <div className="relative inline-block w-full">
+                            <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold ${type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>€</span>
+                            <input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="w-full bg-transparent text-5xl font-bold text-center text-white placeholder-slate-600 focus:outline-none pl-8"
+                            />
+                        </div>
                     </div>
 
-                    {/* Descrizione */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descrizione</label>
-                        <input
-                            type="text"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Es: Cena al ristorante"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 outline-none transition-all"
-                        />
-                    </div>
+                    {/* Form Fields */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-1 ml-1">Descrizione</label>
+                            <input
+                                type="text"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none"
+                            />
+                        </div>
 
-                    {/* Importo */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Importo (€)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xl font-bold bg-gray-50 text-gray-900 outline-none transition-all"
-                            required
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-1 ml-1">Data</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none"
+                            />
+                        </div>
 
-                    {/* Categoria */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Categoria</label>
-                        <select
-                            value={categoryId}
-                            onChange={(e) => setCategoryId(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 outline-none transition-all appearance-none"
-                        >
-                            <option value="">Seleziona categoria...</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.icon} {cat.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                        {/* Recurring Toggle */}
+                        <div className="flex items-center justify-between bg-slate-800 p-3 rounded-xl border border-slate-700">
+                            <span className="text-sm text-slate-300">Ricorsivo (mensile)</span>
+                            <button
+                                type="button"
+                                onClick={() => setIsRecurring(!isRecurring)}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${isRecurring ? 'bg-emerald-500' : 'bg-slate-600'}`}
+                            >
+                                <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isRecurring ? 'translate-x-6' : ''}`}></div>
+                            </button>
+                        </div>
 
-                    <div className="flex gap-3 mt-6">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-xl font-bold transition-all"
-                        >
-                            Annulla
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isLoading || !amount}
-                            className="w-2/3 bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg"
-                        >
-                            {isLoading ? 'Salvataggio...' : 'Salva Modifiche'}
-                        </button>
+                        {/* Categories */}
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2 ml-1">Categoria</label>
+                            <div className="grid grid-cols-4 gap-3">
+                                {categories.map((cat) => {
+                                    const Icon = getCategoryIcon(cat.name);
+                                    const isSelected = categoryId === cat.id;
+                                    return (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setCategoryId(cat.id)}
+                                            className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isSelected
+                                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                }`}
+                                        >
+                                            <Icon size={20} />
+                                            <span className="text-[10px] truncate w-full text-center">{cat.name}</span>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     )

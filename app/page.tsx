@@ -3,49 +3,68 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Transaction, Category, MerchantRule, MonthlyBalance } from '@/lib/types'
-import ExcelUploader from './components/ExcelUploader'
+import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react'
+
+// Components
+import BottomNav from './components/BottomNav'
+import SpendingCard from './components/SpendingCard'
+import TrendChart from './components/TrendChart'
+import TransactionItem from './components/TransactionItem'
+import AddTransactionModal from './components/AddTransactionModal'
+import BulkCategoryModal from './components/BulkCategoryModal'
+
+// Legacy Components (kept for Account/Settings tab)
 import CategoryManager from './components/CategoryManager'
 import MerchantRuleManager from './components/MerchantRuleManager'
-import TransactionForm from './components/TransactionForm'
-import MonthlyBalanceCard from './components/MonthlyBalanceCard'
-import MonthlyReport from './components/MonthlyReport'
-import TrendChart from './components/TrendChart'
-import CategorizationModal from './components/CategorizationModal'
+import ExcelUploader from './components/ExcelUploader'
 import EditTransactionModal from './components/EditTransactionModal'
 
-type Tab = 'transactions' | 'import' | 'settings'
-
-type LogEntry = {
-  time: string
-  type: 'info' | 'success' | 'error'
-  message: string
-}
+type Tab = 'home' | 'transactions' | 'recurring' | 'account'
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Date Navigation State
+  const [selectedDate, setSelectedDate] = useState(new Date())
+
+  // Data State
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [rules, setRules] = useState<MerchantRule[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('transactions')
-  const [editingTransaction, setEditingTransaction] = useState<string | null>(null)
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [showLogs, setShowLogs] = useState(true)
+  const [monthlyBalances, setMonthlyBalances] = useState<MonthlyBalance[]>([])
 
-  // Modal state for categorization choice
-  const [pendingCategorization, setPendingCategorization] = useState<{ t: Transaction, c: Category } | null>(null)
-
-  // Modal state for editing transaction
+  // Edit State
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
 
-  const addLog = useCallback((type: LogEntry['type'], message: string) => {
-    const time = new Date().toLocaleTimeString('it-IT')
-    setLogs(prev => [...prev, { time, type, message }].slice(-50))
+  // Fetch Logic
+  const fetchData = useCallback(async () => {
+    try {
+      const [transRes, catsRes, rulesRes, balRes] = await Promise.all([
+        supabase.from('transactions').select('*, categories(id, name, icon, color)').order('date', { ascending: false }),
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('merchant_rules').select('*'),
+        supabase.from('monthly_balances').select('*')
+      ])
+
+      if (transRes.data) setTransactions(transRes.data)
+      if (catsRes.data) setCategories(catsRes.data)
+      if (rulesRes.data) setRules(rulesRes.data)
+      if (balRes.data) setMonthlyBalances(balRes.data)
+    } catch (err) {
+      console.error('Error fetching data:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  // New state for month filtering
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
+  // Navigation Logic
   const changeMonth = (increment: number) => {
     setSelectedDate(prev => {
       const newDate = new Date(prev)
@@ -54,599 +73,255 @@ export default function Home() {
     })
   }
 
-  // New state for balance filtering
-  const [monthlyBalances, setMonthlyBalances] = useState<MonthlyBalance[]>([])
+  // Filter Transactions by Selected Month
+  const currentMonth = selectedDate.getMonth()
+  const currentYear = selectedDate.getFullYear()
 
-  const deleteTransaction = async (id: string) => {
-    if (!confirm('Sei sicuro di voler eliminare questa transazione?')) return
-
-    try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
-      addLog('success', '🗑️ Transazione eliminata')
-      // Update local state immediately
-      setTransactions(prev => prev.filter(t => t.id !== id))
-    } catch (err: any) {
-      addLog('error', `❌ Errore eliminazione: ${err.message}`)
-    }
-  }
-
-  const fetchTransactions = useCallback(async () => {
-    addLog('info', '📥 Fetching transactions...')
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*, categories(id, name, icon, color)')
-        .order('date', { ascending: false })
-
-      if (error) {
-        addLog('error', `❌ Transactions error: ${error.message} (Code: ${error.code})`)
-        throw error
-      }
-
-      addLog('success', `✅ Loaded ${data?.length || 0} transactions`)
-      setTransactions(data || [])
-    } catch (err: any) {
-      setError(err.message)
-      console.error('❌ Errore:', err)
-    }
-  }, [addLog])
-
-  const fetchCategories = useCallback(async () => {
-    addLog('info', '📥 Fetching categories...')
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-
-      if (error) {
-        addLog('error', `❌ Categories error: ${error.message} (Code: ${error.code})`)
-        throw error
-      }
-      addLog('success', `✅ Loaded ${data?.length || 0} categories`)
-      setCategories(data || [])
-    } catch (err: any) {
-      console.error('❌ Errore categorie:', err)
-    }
-  }, [addLog])
-
-  const fetchRules = useCallback(async () => {
-    addLog('info', '📥 Fetching merchant rules...')
-    try {
-      const { data, error } = await supabase
-        .from('merchant_rules')
-        .select('*, categories(id, name, icon, color)')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        addLog('error', `❌ Rules error: ${error.message} (Code: ${error.code})`)
-        throw error
-      }
-      addLog('success', `✅ Loaded ${data?.length || 0} rules`)
-      setRules(data || [])
-    } catch (err: any) {
-      console.error('❌ Errore regole:', err)
-    }
-  }, [addLog])
-
-  const fetchMonthlyBalances = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('monthly_balances')
-        .select('*')
-
-      if (error) throw error
-      setMonthlyBalances(data || [])
-    } catch (err) {
-      console.error('Error fetching monthly balances:', err)
-    }
-  }, [])
-
-  useEffect(() => {
-    addLog('info', '🚀 App started, loading data...')
-    Promise.all([fetchTransactions(), fetchCategories(), fetchRules(), fetchMonthlyBalances()])
-      .finally(() => setLoading(false))
-  }, [fetchTransactions, fetchCategories, fetchRules, fetchMonthlyBalances, addLog])
-
-  const updateTransactionCategory = async (transaction: Transaction, categoryId: string | null) => {
-    try {
-      // If we are removing a category (setting to null), just do it immediately
-      if (!categoryId) {
-        const { error } = await supabase
-          .from('transactions')
-          .update({ category_id: null })
-          .eq('id', transaction.id)
-
-        if (error) throw error
-        setEditingTransaction(null)
-        fetchTransactions()
-        addLog('info', `🗑️ Categoria rimossa per "${transaction.description}"`)
-        return
-      }
-
-      // If we are setting a category, open the modal to ask scope
-      const category = categories.find(c => c.id === categoryId)
-      if (category) {
-        setPendingCategorization({ t: transaction, c: category })
-        setEditingTransaction(null) // Close the dropdown
-      }
-    } catch (err: any) {
-      console.error('❌ Errore update:', err)
-      addLog('error', `❌ Errore aggiornamento: ${err.message}`)
-    }
-  }
-
-  const handleCategorizationConfirm = async (scope: 'single' | 'all') => {
-    if (!pendingCategorization) return
-    const { t: transaction, c: category } = pendingCategorization
-
-    addLog('info', scope === 'all'
-      ? `🔄 Applicazione regola per "${transaction.description}" (Tutte)...`
-      : `✏️ Aggiornamento singola transazione...`)
-
-    try {
-      // 1. Always update the current transaction first
-      const { error } = await supabase
-        .from('transactions')
-        .update({ category_id: category.id })
-        .eq('id', transaction.id)
-
-      if (error) throw error
-
-      // 2. If 'all', create rule and update others
-      if (scope === 'all') {
-        // Create rule
-        const { error: ruleError } = await supabase
-          .from('merchant_rules')
-          .upsert({
-            merchant_pattern: transaction.description,
-            category_id: category.id
-          }, { onConflict: 'merchant_pattern' })
-
-        if (ruleError) {
-          addLog('error', `❌ Errore creazione regola: ${ruleError.message}`)
-        } else {
-          // Update past transactions
-          await supabase
-            .from('transactions')
-            .update({ category_id: category.id })
-            .eq('description', transaction.description)
-
-          addLog('success', `✅ Regola creata e applicata a tutte le transazioni simili!`)
-          fetchRules()
-        }
-      } else {
-        addLog('success', `✅ Categoria aggiornata per la singola transazione`)
-      }
-
-      fetchTransactions()
-    } catch (err: any) {
-      addLog('error', `❌ Errore salvataggio: ${err.message}`)
-    } finally {
-      setPendingCategorization(null)
-    }
-  }
-
-  const createRuleFromTransaction = async (description: string) => {
-    // Estrae la parte significativa della descrizione
-    const pattern = description.split(' ').slice(0, 2).join(' ').toUpperCase()
-
-    const categoryId = prompt('Inserisci l\'ID della categoria (puoi copiarlo dalla sezione Impostazioni)')
-    if (!categoryId) return
-
-    try {
-      const { error } = await supabase
-        .from('merchant_rules')
-        .insert({ merchant_pattern: pattern, category_id: categoryId })
-
-      if (error) throw error
-
-      // Applica a transazioni esistenti
-      await supabase
-        .from('transactions')
-        .update({ category_id: categoryId })
-        .ilike('description', `%${pattern}%`)
-
-      fetchTransactions()
-      fetchRules()
-      alert(`✅ Regola creata: tutte le transazioni contenenti "${pattern}" saranno categorizzate!`)
-    } catch (err: any) {
-      console.error('❌ Errore regola:', err)
-      alert('Errore nella creazione della regola')
-    }
-  }
-
-  const getCategoryForTransaction = (transaction: any) => {
-    if (transaction.categories) {
-      return transaction.categories
-    }
-    if (transaction.category_id) {
-      return categories.find(c => c.id === transaction.category_id)
-    }
-    return null
-  }
-
-
-
-  // Filter transactions for selected month
   const filteredTransactions = transactions.filter(t => {
-    const tDate = new Date(t.date)
-    return tDate.getMonth() === selectedDate.getMonth() &&
-      tDate.getFullYear() === selectedDate.getFullYear()
+    const d = new Date(t.date)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
   })
 
-  // Calculate totals based on filtered transactions
-  const totalExpenses = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-
+  // Calculate Totals for Selected Month
   const totalIncome = filteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0)
 
-  // Group transactions by date
-  const groupedTransactions = filteredTransactions.reduce((groups, transaction) => {
-    const date = transaction.date.split('T')[0]
-    if (!groups[date]) {
-      groups[date] = {
-        transactions: [],
-        total: 0
-      }
-    }
-    groups[date].transactions.push(transaction)
-    if (transaction.type === 'expense') {
-      groups[date].total -= Math.abs(transaction.amount)
-    } else {
-      groups[date].total += Math.abs(transaction.amount)
-    }
-    return groups
-  }, {} as Record<string, { transactions: typeof transactions, total: number }>)
+  const totalExpense = filteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
 
-  // Sort dates descending
-  const sortedDates = Object.keys(groupedTransactions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  const currentBalance = totalIncome - totalExpense
 
+  // --- Views ---
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header with Month Navigation */}
-        <header className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              💰 Finance Tracker
-            </h1>
-            <p className="text-slate-400 mt-2">Gestisci le tue finanze con semplicità</p>
-          </div>
-
-          <div className="flex items-center gap-4 bg-slate-800/80 p-2 rounded-xl border border-slate-700">
-            <button
-              onClick={() => changeMonth(-1)}
-              className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
-            >
-              ◀️
-            </button>
-            <h2 className="text-xl font-bold text-white min-w-[160px] text-center capitalize">
-              {selectedDate.toLocaleString('it-IT', { month: 'long', year: 'numeric' })}
-            </h2>
-            <button
-              onClick={() => changeMonth(1)}
-              className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
-            >
-              ▶️
-            </button>
-          </div>
-        </header>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 backdrop-blur-sm border border-red-500/20 p-6 rounded-2xl">
-            <p className="text-red-300 text-sm font-medium">Totale Spese</p>
-            <p className="text-4xl font-bold text-white mt-1">
-              €{totalExpenses.toFixed(2)}
-            </p>
-          </div>
-          <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-sm border border-green-500/20 p-6 rounded-2xl">
-            <p className="text-green-300 text-sm font-medium">Totale Entrate</p>
-            <p className="text-4xl font-bold text-white mt-1">
-              €{totalIncome.toFixed(2)}
-            </p>
-          </div>
-          <div className={`bg-gradient-to-br backdrop-blur-sm border p-6 rounded-2xl ${totalIncome - totalExpenses >= 0
-            ? 'from-blue-500/20 to-blue-600/10 border-blue-500/20'
-            : 'from-orange-500/20 to-orange-600/10 border-orange-500/20'
-            }`}>
-            <p className={`text-sm font-medium ${totalIncome - totalExpenses >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>
-              Bilancio
-            </p>
-            <p className="text-4xl font-bold text-white mt-1">
-              €{(totalIncome - totalExpenses).toFixed(2)}
-            </p>
-          </div>
+  const renderHome = () => (
+    <div className="space-y-6 pb-24 animate-in fade-in duration-500">
+      {/* Header with Month Nav */}
+      <header className="flex justify-between items-center py-4 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md -mx-6 px-6">
+        <div className="flex items-center gap-4">
+          <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold text-white capitalize min-w-[140px] text-center">
+            {selectedDate.toLocaleString('it-IT', { month: 'long', year: 'numeric' })}
+          </h2>
+          <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+            <ChevronRight size={24} />
+          </button>
         </div>
+      </header>
 
-        {/* Reports Section (only in Transactions tab) */}
-        {!loading && !error && activeTab === 'transactions' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <MonthlyReport
-              transactions={filteredTransactions}
-              categories={categories}
-            />
-            <TrendChart
-              transactions={transactions}
-              currentDate={selectedDate}
-              monthlyBalances={monthlyBalances}
-            />
-          </div>
-        )}
+      <SpendingCard
+        balance={currentBalance}
+        income={totalIncome}
+        expense={totalExpense}
+      />
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit">
-          {[
-            { id: 'transactions', label: '📋 Transazioni', icon: '' },
-            { id: 'settings', label: '⚙️ Impostazioni', icon: '' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as Tab)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === tab.id
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }`}
-            >
-              {tab.label}
-            </button>
+      <TrendChart
+        transactions={transactions}
+        currentDate={selectedDate}
+        monthlyBalances={monthlyBalances}
+      />
+
+      <div>
+        <div className="flex justify-between items-center mb-4 px-1">
+          <h3 className="font-semibold text-slate-200">Recenti</h3>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className="text-emerald-500 text-xs font-medium hover:text-emerald-400"
+          >
+            Vedi tutti
+          </button>
+        </div>
+        <div className="space-y-3">
+          {filteredTransactions.slice(0, 5).map(t => (
+            <TransactionItem
+              key={t.id}
+              transaction={t}
+              category={categories.find(c => c.id === t.category_id)}
+              onClick={() => setTransactionToEdit(t)}
+            />
           ))}
+          {filteredTransactions.length === 0 && (
+            <p className="text-slate-500 text-center text-sm py-4">Nessuna transazione questo mese.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderTransactions = () => {
+    // Group by date
+    const grouped = filteredTransactions.reduce((acc, t) => {
+      const date = t.date.split('T')[0]
+      if (!acc[date]) acc[date] = []
+      acc[date].push(t)
+      return acc
+    }, {} as Record<string, Transaction[]>)
+
+    return (
+      <div className="space-y-6 pb-24 animate-in fade-in duration-300">
+
+        {/* Header with Actions */}
+        <div className="flex justify-between items-center mb-6 pt-2 sticky top-0 bg-slate-950/95 py-4 z-20 backdrop-blur-md">
+          <h2 className="text-2xl font-bold text-white">Transazioni</h2>
+          <button
+            onClick={() => setIsBulkModalOpen(true)}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-purple-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-purple-500/20"
+          >
+            <Edit2 size={12} /> Modifica Massiva
+          </button>
         </div>
 
+        {/* Month Selector in Transactions too */}
+        <div className="flex items-center justify-center gap-4 mb-6 bg-slate-900 mx-auto w-fit px-4 py-2 rounded-full border border-slate-800">
+          <button onClick={() => changeMonth(-1)} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+          <span className="text-sm font-bold text-slate-200 capitalize w-32 text-center">
+            {selectedDate.toLocaleString('it-IT', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={() => changeMonth(1)} className="text-slate-400 hover:text-white"><ChevronRight size={20} /></button>
+        </div>
 
-
-        {/* Content */}
-        {loading && (
-          <div className="bg-slate-800/50 backdrop-blur-sm p-8 rounded-2xl text-center border border-slate-700">
-            <div className="animate-spin inline-block w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-            <p className="text-slate-400 mt-4">Caricamento...</p>
+        {Object.keys(grouped).length === 0 ? (
+          <div className="text-center py-20 text-slate-500">
+            <p>Nessuna transazione in questo periodo.</p>
           </div>
-        )}
-
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-6 py-4 rounded-2xl mb-6">
-            ❌ Errore: {error}
-          </div>
-        )}
-
-        {!loading && !error && activeTab === 'transactions' && (
-          <div className="space-y-6">
-            {/* Manual Transaction Form */}
-            <TransactionForm
-              categories={categories}
-              onSuccess={(date) => {
-                fetchTransactions()
-                if (date) {
-                  setSelectedDate(date)
-                  setActiveTab('transactions')
-                  addLog('info', `📅 Vista aggiornata: ${date.toLocaleString('it-IT', { month: 'long' })}`)
-                }
-              }}
-            />
-
-            {/* Transactions List */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden">
-              <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
-                  Transazioni ({filteredTransactions.length})
-                </h2>
-              </div>
-
-              {filteredTransactions.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">
-                  Nessuna transazione trovata. Importa un file Excel o aggiungi manualmente!
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-700/50">
-                  {sortedDates.map((date) => {
-                    const group = groupedTransactions[date]
-                    const dateObj = new Date(date)
-                    const isToday = new Date().toDateString() === dateObj.toDateString()
-
-                    return (
-                      <div key={date} className="bg-slate-800/30">
-                        {/* Daily Header */}
-                        <div className="px-6 py-3 bg-slate-900/50 flex justify-between items-center sticky top-0 backdrop-blur-sm z-10 border-y border-slate-700/50">
-                          <h3 className="font-semibold text-slate-300 flex items-center gap-2">
-                            {isToday ? 'Oggi' : dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
-                          </h3>
-                          <span className={`font-mono font-medium ${group.total >= 0 ? 'text-green-400' : 'text-slate-400'}`}>
-                            {group.total < 0 ? '-' : group.total > 0 ? '+' : ''}€{Math.abs(group.total).toFixed(2)}
-                          </span>
-                        </div>
-
-                        {/* Daily Transactions */}
-                        <div className="divide-y divide-slate-700/30">
-                          {group.transactions.map((t) => {
-                            const cat = getCategoryForTransaction(t)
-                            return (
-                              <div key={t.id} className="px-6 py-4 hover:bg-slate-700/30 transition-colors">
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <p className="font-medium text-white">
-                                        {t.description || 'Nessuna descrizione'}
-                                      </p>
-                                      {t.is_manual && (
-                                        <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded">
-                                          manuale
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 mt-2 text-sm">
-                                      {/* Category Display/Edit */}
-                                      {editingTransaction === t.id ? (
-                                        <select
-                                          value={t.category_id || ''}
-                                          onChange={(e) => updateTransactionCategory(t, e.target.value || null)}
-                                          onBlur={() => setEditingTransaction(null)}
-                                          autoFocus
-                                          className="bg-slate-700 text-white px-2 py-0.5 rounded text-sm border border-slate-600"
-                                        >
-                                          <option value="">Nessuna categoria</option>
-                                          {categories.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                              {c.icon} {c.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      ) : (
-                                        <button
-                                          onClick={() => setEditingTransaction(t.id)}
-                                          className={`px-2 py-0.5 rounded text-sm transition-colors ${cat
-                                            ? ''
-                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                                            }`}
-                                          style={cat ? {
-                                            backgroundColor: cat.color + '30',
-                                            color: cat.color
-                                          } : undefined}
-                                        >
-                                          {cat ? `${cat.icon} ${cat.name}` : '+ Categoria'}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="text-right ml-4 flex flex-col items-end">
-                                    <p className={`text-xl font-bold ${t.type === 'expense' ? 'text-red-400' : 'text-green-400'}`}>
-                                      {t.type === 'expense' ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
-                                    </p>
-                                    <div className="flex items-center gap-3 mt-1">
-                                      <p className="text-xs text-slate-500">{t.currency}</p>
-                                      <button
-                                        onClick={() => setTransactionToEdit(t)}
-                                        className="text-slate-600 hover:text-blue-400 transition-colors"
-                                        title="Modifica transazione"
-                                      >
-                                        ✏️
-                                      </button>
-                                      <button
-                                        onClick={() => deleteTransaction(t.id)}
-                                        className="text-slate-600 hover:text-red-400 transition-colors"
-                                        title="Elimina transazione"
-                                      >
-                                        🗑️
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-
-
-        {!loading && !error && activeTab === 'settings' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <CategoryManager
-                categories={categories}
-                onUpdate={() => fetchCategories()}
-              />
-              <MerchantRuleManager
-                rules={rules}
-                categories={categories}
-                onUpdate={() => fetchRules()}
-                onTransactionsUpdated={() => fetchTransactions()}
-              />
-            </div>
-            <div className="space-y-6">
-              <MonthlyBalanceCard
-                transactionsTotal={{ income: totalIncome, expense: totalExpenses }}
-                onUpdate={fetchMonthlyBalances}
-              />
-
-              {/* Danger Zone */}
-              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
-                  ☢️ Zona Pericolo
-                </h3>
-                <p className="text-slate-400 mb-4 text-sm">
-                  Queste azioni sono irreversibili. Procedi con cautela.
-                </p>
-                <button
-                  onClick={async () => {
-                    if (confirm('SEI SICURO? Questa azione cancellerà TUTTE le transazioni dal database. Non si può annullare.')) {
-                      addLog('info', '🗑️ Eliminazione di tutte le transazioni...')
-                      try {
-                        const { error } = await supabase.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-                        if (error) throw error
-                        addLog('success', '✅ Tutte le transazioni eliminate')
-                        fetchTransactions()
-                      } catch (err: any) {
-                        addLog('error', `❌ Errore eliminazione: ${err.message}`)
-                      }
-                    }
-                  }}
-                  className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  🗑️ Elimina TUTTE le transazioni
-                </button>
-              </div>
-
-              {/* Debug Log Panel */}
-              <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                <button
-                  onClick={() => setShowLogs(!showLogs)}
-                  className="w-full flex justify-between items-center text-slate-400 hover:text-white transition-colors"
-                >
-                  <span className="font-semibold flex items-center gap-2">🐞 Debug Log</span>
-                  <span>{showLogs ? '🔽' : '▶️'} ({logs.length})</span>
-                </button>
-
-                {showLogs && (
-                  <div className="mt-4 bg-slate-900 rounded-xl p-4 max-h-48 overflow-y-auto font-mono text-xs border border-slate-700/50">
-                    {logs.length === 0 ? (
-                      <p className="text-slate-600 italic">Nessun log in memoria...</p>
-                    ) : (
-                      logs.map((log, i) => (
-                        <div
-                          key={i}
-                          className={`py-1 border-b border-slate-800/50 last:border-0 ${log.type === 'error' ? 'text-red-400' :
-                            log.type === 'success' ? 'text-green-400' :
-                              'text-slate-400'
-                            }`}
-                        >
-                          <span className="text-slate-600 mr-2">[{log.time}]</span>
-                          {log.message}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
+        ) : (
+          Object.entries(grouped).map(([date, items]) => (
+            <div key={date}>
+              <h3 className="text-slate-500 text-xs font-bold uppercase mb-3 sticky top-16 bg-slate-950 py-2 z-10 opacity-90">
+                {new Date(date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </h3>
+              <div className="space-y-3">
+                {items.map(t => (
+                  <TransactionItem
+                    key={t.id}
+                    transaction={t}
+                    category={categories.find(c => c.id === t.category_id)}
+                    onClick={() => setTransactionToEdit(t)}
+                  />
+                ))}
               </div>
             </div>
+          ))
+        )}
+      </div>
+    )
+  }
+
+  const renderRecurring = () => {
+    const recurring = transactions.filter(t => t.is_recurring)
+    return (
+      <div className="space-y-6 pb-24 animate-in fade-in duration-300">
+        <h2 className="text-2xl font-bold text-white mb-2 pt-2">Spese Ricorrenti</h2>
+        <p className="text-slate-400 text-sm mb-6">Transazioni segnate come ripetitive</p>
+
+        {recurring.length === 0 ? (
+          <div className="text-center py-10 text-slate-500">
+            <Settings className="mx-auto mb-3 opacity-20" size={48} />
+            <p>Nessuna spesa ricorrente attiva</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recurring.map(t => (
+              <TransactionItem
+                key={t.id}
+                transaction={t}
+                category={categories.find(c => c.id === t.category_id)}
+                onClick={() => setTransactionToEdit(t)}
+              />
+            ))}
           </div>
         )}
       </div>
+    )
+  }
 
-      <CategorizationModal
-        isOpen={!!pendingCategorization}
-        transaction={pendingCategorization?.t || null}
-        category={pendingCategorization?.c || null}
-        onClose={() => setPendingCategorization(null)}
-        onConfirm={handleCategorizationConfirm}
+  const renderAccount = () => (
+    <div className="space-y-8 pb-24 animate-in fade-in duration-300">
+      <header className="flex items-center gap-4 mb-8 pt-2">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
+          LI
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-white">Luigi Iacono</h2>
+          <p className="text-slate-400 text-sm">Account Premium</p>
+        </div>
+      </header>
+
+      {/* Categories & Rules */}
+      <section className="space-y-6">
+        <h3 className="font-semibold text-white mb-4">Gestione</h3>
+        <CategoryManager
+          categories={categories}
+          onUpdate={fetchData}
+        />
+        <MerchantRuleManager
+          rules={rules}
+          categories={categories}
+          onUpdate={fetchData}
+          onTransactionsUpdated={fetchData}
+        />
+      </section>
+
+      {/* Danger Zone */}
+      <section className="bg-red-900/10 rounded-2xl p-6 border border-red-900/30">
+        <h3 className="font-semibold text-red-400 mb-2 flex items-center gap-2">
+          <LogOut size={18} /> Zona Pericolo
+        </h3>
+        <button
+          onClick={async () => {
+            if (confirm('Eliminare TUTTO?')) {
+              await supabase.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+              fetchData()
+            }
+          }}
+          className="w-full py-3 bg-red-600/80 hover:bg-red-500 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          Reset Totale Database
+        </button>
+      </section>
+    </div>
+  )
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+    </div>
+  )
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-emerald-500/30">
+      <div className="max-w-md mx-auto p-6">
+
+        {/* View Switcher */}
+        {activeTab === 'home' && renderHome()}
+        {activeTab === 'transactions' && renderTransactions()}
+        {activeTab === 'recurring' && renderRecurring()}
+        {activeTab === 'account' && renderAccount()}
+
+      </div>
+
+      {/* Modals */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAddClick={() => setIsAddModalOpen(true)}
+      />
+
+      <AddTransactionModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchData}
+        categories={categories}
+      />
+
+      <BulkCategoryModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        categories={categories}
+        onSuccess={fetchData}
       />
 
       <EditTransactionModal
@@ -654,9 +329,9 @@ export default function Home() {
         transaction={transactionToEdit}
         categories={categories}
         onClose={() => setTransactionToEdit(null)}
-        onSuccess={(updatedTransaction) => {
-          fetchTransactions()
-          addLog('success', '✏️ Transazione aggiornata')
+        onSuccess={() => {
+          fetchData()
+          setTransactionToEdit(null)
         }}
       />
     </main>
