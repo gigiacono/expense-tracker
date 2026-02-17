@@ -16,12 +16,15 @@ export const metadata: Metadata = {
   title: "Expense Tracker",
   description: "Traccia le tue spese personali",
   manifest: "/manifest.json",
-  themeColor: "#0f172a",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Expense Tracker",
   },
+};
+
+export const viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({

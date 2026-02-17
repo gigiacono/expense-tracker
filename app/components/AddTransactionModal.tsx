@@ -113,7 +113,10 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess, catego
                         <div className="py-4 space-y-4 text-center">
                             <h3 className="text-white font-semibold mb-2">Carica file Revolut/Excel</h3>
                             <p className="text-slate-400 text-sm mb-6">Carica il file .csv o .xlsx per importare le transazioni in massa.</p>
-                            <ExcelUploader onUploadSuccess={() => { onSuccess(); onClose(); }} />
+                            <ExcelUploader
+                                categories={categories}
+                                onImportComplete={() => { onSuccess(); onClose(); }}
+                            />
                         </div>
                     ) : (
                         <>
