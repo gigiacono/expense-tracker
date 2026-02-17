@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Category } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import { X, Check, Calendar, Tag } from 'lucide-react';
+import { X, Check, Calendar, Tag, Search } from 'lucide-react';
 import { getCategoryIcon } from '@/app/lib/categoryIcons';
 
 interface BulkCategoryModalProps {
@@ -14,6 +14,7 @@ interface BulkCategoryModalProps {
 export default function BulkCategoryModal({ isOpen, onClose, categories, onSuccess }: BulkCategoryModalProps) {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [loading, setLoading] = useState(false);
     const [count, setCount] = useState<number | null>(null);
@@ -23,12 +24,17 @@ export default function BulkCategoryModal({ isOpen, onClose, categories, onSucce
     const handlePreview = async () => {
         if (!startDate || !endDate) return;
 
-        const { count } = await supabase
+        let query = supabase
             .from('transactions')
             .select('*', { count: 'exact', head: true })
             .gte('date', new Date(startDate).toISOString())
             .lte('date', new Date(endDate).toISOString());
 
+        if (keyword.trim()) {
+            query = query.ilike('description', `%${keyword.trim()}%`);
+        }
+
+        const { count } = await query;
         setCount(count || 0);
     }
 
@@ -37,11 +43,17 @@ export default function BulkCategoryModal({ isOpen, onClose, categories, onSucce
         setLoading(true);
 
         try {
-            const { error } = await supabase
+            let query = supabase
                 .from('transactions')
                 .update({ category_id: categoryId })
                 .gte('date', new Date(startDate).toISOString())
                 .lte('date', new Date(endDate).toISOString());
+
+            if (keyword.trim()) {
+                query = query.ilike('description', `%${keyword.trim()}%`);
+            }
+
+            const { error } = await query;
 
             if (error) throw error;
 
@@ -72,29 +84,53 @@ export default function BulkCategoryModal({ isOpen, onClose, categories, onSucce
 
                 <div className="p-6 space-y-6 overflow-y-auto">
                     <div className="space-y-4">
+
+                        {/* Keyword Filter */}
                         <div>
-                            <label className="text-xs text-slate-400 ml-1 mb-1 block">Dal</label>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => {
-                                    setStartDate(e.target.value);
-                                    setCount(null);
-                                }}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                            />
+                            <label className="text-xs text-slate-400 ml-1 mb-1 block">Filtra per Esercente (Opzionale)</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-3 text-slate-500" size={16} />
+                                <input
+                                    type="text"
+                                    value={keyword}
+                                    onChange={(e) => {
+                                        setKeyword(e.target.value);
+                                        setCount(null);
+                                    }}
+                                    placeholder="Es. Amazon, Bar, ecc."
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none placeholder:text-slate-600"
+                                />
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-1 ml-1">
+                                Lascia vuoto per modificare TUTTE le transazioni nel periodo.
+                            </p>
                         </div>
-                        <div>
-                            <label className="text-xs text-slate-400 ml-1 mb-1 block">Al</label>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => {
-                                    setEndDate(e.target.value);
-                                    setCount(null);
-                                }}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                            />
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs text-slate-400 ml-1 mb-1 block">Dal</label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => {
+                                        setStartDate(e.target.value);
+                                        setCount(null);
+                                    }}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400 ml-1 mb-1 block">Al</label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => {
+                                        setEndDate(e.target.value);
+                                        setCount(null);
+                                    }}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
+                                />
+                            </div>
                         </div>
 
                         {startDate && endDate && (
@@ -120,8 +156,8 @@ export default function BulkCategoryModal({ isOpen, onClose, categories, onSucce
                                             key={cat.id}
                                             onClick={() => setCategoryId(cat.id)}
                                             className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isSelected
-                                                    ? 'bg-purple-500/20 border-purple-500 text-purple-400'
-                                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                ? 'bg-purple-500/20 border-purple-500 text-purple-400'
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                                                 }`}
                                         >
                                             <Icon size={18} />
