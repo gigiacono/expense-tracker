@@ -104,10 +104,11 @@ expense-tracker/
 ### v2.0.0 (17/02/2026) - UI Overhaul 🎨
 - **Complete Redesign**: Passaggio a Dark Theme e layout mobile-app like.
 - **New Features**:
-  - Month Navigation
-  - Bulk Edit (Categorizzazione massiva)
-  - Recurring Transactions Support
-  - Unified Add/Import Modal
+  - Month Navigation (< >)
+  - **Bulk Edit**: Categorizzazione massiva per data e keyword (Es. "Amazon").
+  - **Smart Edit**: Opzione "Ricorda per il futuro" ⚡️ per creare regole automatiche durante la modifica.
+  - Recurring Transactions Support.
+  - Unified Add/Import Modal (Manuale + Excel).
 - **Tech**: Aggiunta `lucide-react`, rimozione vecchi componenti UI.
 
 ### v1.3.4 (04/02/2026)
