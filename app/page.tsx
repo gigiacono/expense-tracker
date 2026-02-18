@@ -229,15 +229,6 @@ export default function Home() {
             >
               Tutte
             </button>
-            <button
-              onClick={() => setFilterCategoryId(filterCategoryId === 'uncategorized' ? null : 'uncategorized')}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === 'uncategorized'
-                ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
-                : 'border-slate-700 text-slate-400 hover:border-slate-600'
-                }`}
-            >
-              ❓ Non categorizzati
-            </button>
             {usedCategories.map(cat => (
               <button
                 key={cat.id}
@@ -250,6 +241,15 @@ export default function Home() {
                 {cat.name}
               </button>
             ))}
+            <button
+              onClick={() => setFilterCategoryId(filterCategoryId === 'uncategorized' ? null : 'uncategorized')}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === 'uncategorized'
+                ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
+                : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+            >
+              ❓ Non categorizzati
+            </button>
           </div>
         )}
 
