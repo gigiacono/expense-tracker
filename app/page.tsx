@@ -156,9 +156,11 @@ export default function Home() {
 
   const renderTransactions = () => {
     // Apply category filter
-    const displayTransactions = filterCategoryId
-      ? filteredTransactions.filter(t => t.category_id === filterCategoryId)
-      : filteredTransactions
+    const displayTransactions = filterCategoryId === 'uncategorized'
+      ? filteredTransactions.filter(t => !t.category_id)
+      : filterCategoryId
+        ? filteredTransactions.filter(t => t.category_id === filterCategoryId)
+        : filteredTransactions
 
     // Calculate totals for displayed transactions
     const displayExpense = displayTransactions
@@ -221,19 +223,28 @@ export default function Home() {
             <button
               onClick={() => setFilterCategoryId(null)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === null
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                  : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                : 'border-slate-700 text-slate-400 hover:border-slate-600'
                 }`}
             >
               Tutte
+            </button>
+            <button
+              onClick={() => setFilterCategoryId(filterCategoryId === 'uncategorized' ? null : 'uncategorized')}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === 'uncategorized'
+                ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
+                : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+            >
+              ❓ Non categorizzati
             </button>
             {usedCategories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setFilterCategoryId(filterCategoryId === cat.id ? null : cat.id)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === cat.id
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                    : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                  : 'border-slate-700 text-slate-400 hover:border-slate-600'
                   }`}
               >
                 {cat.name}
