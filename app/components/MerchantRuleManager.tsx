@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { Category, MerchantRule } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-import { Plus, X, Trash2, ArrowRight, Zap } from 'lucide-react'
+import { Zap, ChevronRight, Plus } from 'lucide-react'
+import { getCategoryIcon } from '@/app/lib/categoryIcons'
+import SmartRulesModal from './SmartRulesModal'
 
 type MerchantRuleManagerProps = {
     rules: MerchantRule[]
@@ -18,213 +20,156 @@ export default function MerchantRuleManager({
     onUpdate,
     onTransactionsUpdated
 }: MerchantRuleManagerProps) {
-    const [isAdding, setIsAdding] = useState(false)
-    const [pattern, setPattern] = useState('')
-    const [selectedCategory, setSelectedCategory] = useState('')
-    const [applyToExisting, setApplyToExisting] = useState(true)
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+    const [showAddNew, setShowAddNew] = useState(false)
+    const [newPattern, setNewPattern] = useState('')
+    const [newCategoryId, setNewCategoryId] = useState('')
     const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [success, setSuccess] = useState<string | null>(null)
 
-    const handleAdd = async () => {
-        if (!pattern.trim() || !selectedCategory) return
+    // Group rules by category
+    const rulesByCategory = categories
+        .map(cat => ({
+            category: cat,
+            rules: rules.filter(r => r.category_id === cat.id)
+        }))
+        .filter(group => group.rules.length > 0)
 
+    const handleQuickAdd = async () => {
+        if (!newPattern.trim() || !newCategoryId) return
         setIsLoading(true)
-        setError(null)
-        setSuccess(null)
-
         try {
-            const { error: insertError } = await supabase
+            const { error } = await supabase
                 .from('merchant_rules')
-                .insert({
-                    merchant_pattern: pattern.trim(),
-                    category_id: selectedCategory
-                })
+                .insert({ merchant_pattern: newPattern.trim(), category_id: newCategoryId })
+            if (error) throw error
 
-            if (insertError) throw insertError
+            // Apply to existing
+            const { data: txs } = await supabase
+                .from('transactions')
+                .select('id')
+                .ilike('description', `%${newPattern.trim()}%`)
 
-            if (applyToExisting) {
-                const { data: transactions, error: fetchError } = await supabase
+            if (txs && txs.length > 0) {
+                await supabase
                     .from('transactions')
-                    .select('id, description')
-                    .ilike('description', `%${pattern.trim()}%`)
-
-                if (fetchError) throw fetchError
-
-                if (transactions && transactions.length > 0) {
-                    const { error: updateError } = await supabase
-                        .from('transactions')
-                        .update({ category_id: selectedCategory })
-                        .in('id', transactions.map(t => t.id))
-
-                    if (updateError) throw updateError
-
-                    setSuccess(`Regola creata e applicata a ${transactions.length} transazioni!`)
-                    onTransactionsUpdated()
-                } else {
-                    setSuccess('Regola creata! Nessuna transazione esistente corrispondente.')
-                }
-            } else {
-                setSuccess('Regola creata!')
+                    .update({ category_id: newCategoryId })
+                    .in('id', txs.map(t => t.id))
+                onTransactionsUpdated()
             }
 
-            setPattern('')
-            setSelectedCategory('')
-            setIsAdding(false)
+            setNewPattern('')
+            setNewCategoryId('')
+            setShowAddNew(false)
             onUpdate()
         } catch (err: any) {
-            setError(err.message)
+            console.error(err)
         } finally {
             setIsLoading(false)
         }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Sei sicuro di voler eliminare questa regola?')) return
-
-        try {
-            const { error } = await supabase
-                .from('merchant_rules')
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
-            onUpdate()
-        } catch (err: any) {
-            setError(err.message)
-        }
-    }
-
-    const getCategoryInfo = (categoryId: string) => {
-        return categories.find(c => c.id === categoryId)
-    }
-
     return (
-        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-5">
-            <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
-                    <Zap size={14} className="text-yellow-400" />
-                    Regole Smart
-                </h3>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${isAdding
-                            ? 'bg-slate-800 border-slate-700 text-slate-400'
-                            : 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'
-                        }`}
-                >
-                    {isAdding ? <><X size={12} /> Annulla</> : <><Plus size={12} /> Nuova</>}
-                </button>
-            </div>
-
-            <p className="text-slate-500 text-xs mb-4">
-                Auto-categorizza le transazioni future per keyword.
-            </p>
-
-            {error && (
-                <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs">
-                    ❌ {error}
+        <>
+            <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-5">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
+                        <Zap size={14} className="text-yellow-400" />
+                        Regole Smart
+                    </h3>
+                    <button
+                        onClick={() => setShowAddNew(!showAddNew)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${showAddNew
+                                ? 'bg-slate-800 border-slate-700 text-slate-400'
+                                : 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'
+                            }`}
+                    >
+                        <Plus size={12} /> Nuova
+                    </button>
                 </div>
-            )}
+                <p className="text-slate-500 text-xs mb-4">
+                    Tocca una categoria per gestire le sue keyword.
+                </p>
 
-            {success && (
-                <div className="mb-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-emerald-400 text-xs">
-                    ✅ {success}
-                </div>
-            )}
-
-            {/* Add form */}
-            {isAdding && (
-                <div className="mb-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-3">
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1 ml-1">
-                            Parola chiave
-                        </label>
+                {/* Quick Add */}
+                {showAddNew && (
+                    <div className="mb-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-3">
                         <input
                             type="text"
-                            value={pattern}
-                            onChange={(e) => setPattern(e.target.value)}
-                            placeholder="Es: AMAZON, SPOTIFY..."
+                            value={newPattern}
+                            onChange={(e) => setNewPattern(e.target.value)}
+                            placeholder="Keyword (es: AMAZON)"
                             className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-yellow-500 outline-none placeholder-slate-500"
                         />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1 ml-1">Categoria</label>
                         <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            value={newCategoryId}
+                            onChange={(e) => setNewCategoryId(e.target.value)}
                             className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-yellow-500 outline-none"
                         >
                             <option value="">Seleziona categoria...</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.icon} {cat.name}
-                                </option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
                             ))}
                         </select>
-                    </div>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer">
                         <button
-                            type="button"
-                            onClick={() => setApplyToExisting(!applyToExisting)}
-                            className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${applyToExisting ? 'bg-yellow-500' : 'bg-slate-600'}`}
+                            onClick={handleQuickAdd}
+                            disabled={isLoading || !newPattern.trim() || !newCategoryId}
+                            className="w-full bg-yellow-500 text-slate-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-yellow-400 disabled:opacity-50 transition-colors"
                         >
-                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${applyToExisting ? 'translate-x-5' : ''}`}></div>
+                            {isLoading ? 'Salvataggio...' : 'Aggiungi Regola'}
                         </button>
-                        <span className="text-xs text-slate-300">Applica anche alle transazioni esistenti</span>
-                    </label>
-
-                    <button
-                        onClick={handleAdd}
-                        disabled={isLoading || !pattern.trim() || !selectedCategory}
-                        className="w-full bg-yellow-500 text-slate-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-yellow-400 disabled:opacity-50 transition-colors"
-                    >
-                        {isLoading ? 'Salvataggio...' : 'Salva Regola'}
-                    </button>
-                </div>
-            )}
-
-            {/* Rules list */}
-            <div className="space-y-1">
-                {rules.length === 0 ? (
-                    <p className="text-slate-500 text-center text-xs py-4">
-                        Nessuna regola. Le transazioni verranno categorizzate manualmente.
-                    </p>
-                ) : (
-                    rules.map((rule) => {
-                        const cat = getCategoryInfo(rule.category_id)
-                        return (
-                            <div
-                                key={rule.id}
-                                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/50 group transition-colors"
-                            >
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <span className="font-mono bg-slate-800 px-2 py-1 rounded-lg text-xs text-slate-300 border border-slate-700 truncate">
-                                        {rule.merchant_pattern}
-                                    </span>
-                                    <ArrowRight size={12} className="text-slate-600 shrink-0" />
-                                    {cat && (
-                                        <span
-                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs shrink-0"
-                                            style={{ backgroundColor: cat.color + '20', color: cat.color }}
-                                        >
-                                            {cat.icon} {cat.name}
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(rule.id)}
-                                    className="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1 shrink-0"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        )
-                    })
+                    </div>
                 )}
+
+                {/* Category list with rule counts */}
+                <div className="space-y-1.5">
+                    {rulesByCategory.length === 0 ? (
+                        <p className="text-slate-500 text-center text-xs py-4">
+                            Nessuna regola. Usa il pulsante + per crearne una.
+                        </p>
+                    ) : (
+                        rulesByCategory.map(({ category: cat, rules: catRules }) => {
+                            const Icon = getCategoryIcon(cat.name)
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/60 transition-colors group text-left"
+                                >
+                                    <div
+                                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                        style={{ backgroundColor: cat.color + '20' }}
+                                    >
+                                        <Icon size={16} style={{ color: cat.color }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-slate-200 font-medium">{cat.name}</p>
+                                        <p className="text-xs text-slate-500 truncate">
+                                            {catRules.map(r => r.merchant_pattern).join(', ')}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-xs font-medium text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+                                            {catRules.length}
+                                        </span>
+                                        <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                                    </div>
+                                </button>
+                            )
+                        })
+                    )}
+                </div>
             </div>
-        </div>
+
+            {/* Modal */}
+            {selectedCategory && (
+                <SmartRulesModal
+                    category={selectedCategory}
+                    rules={rules.filter(r => r.category_id === selectedCategory.id)}
+                    onClose={() => setSelectedCategory(null)}
+                    onUpdate={onUpdate}
+                    onTransactionsUpdated={onTransactionsUpdated}
+                />
+            )}
+        </>
     )
 }
