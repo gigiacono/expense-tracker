@@ -101,6 +101,19 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.1.0 (18/02/2026) - Nuove Funzionalità 🚀
+- **Elimina Transazione**: Pulsante rosso nel modale di modifica con conferma.
+- **Grafico a Torta** 🍩: Donut chart con ripartizione spese per categoria nella Home.
+- **Grafico Andamento** spostato nella tab Account.
+- **Tab Transazioni**:
+  - Totali mensili (Spese + Entrate) in card compatte.
+  - Filtro per categoria con chips scrollabili.
+  - Filtro "Non categorizzati" per individuare transazioni senza categoria.
+  - Totale spese giornaliero per ogni gruppo.
+- **SpendingCard**: Spese del mese come numero principale, saldo in basso.
+- **Import Excel**: Prelievi contanti (ATM) esclusi automaticamente.
+- **Icona App**: Nuova icona personalizzata wallet verde su sfondo navy.
+
 ### v2.0.0 (17/02/2026) - UI Overhaul 🎨
 - **Complete Redesign**: Passaggio a Dark Theme e layout mobile-app like.
 - **New Features**:
