@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Category, MerchantRule } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
+import { Plus, X, Trash2, ArrowRight, Zap } from 'lucide-react'
 
 type MerchantRuleManagerProps = {
     rules: MerchantRule[]
@@ -33,7 +34,6 @@ export default function MerchantRuleManager({
         setSuccess(null)
 
         try {
-            // 1. Crea la regola
             const { error: insertError } = await supabase
                 .from('merchant_rules')
                 .insert({
@@ -43,7 +43,6 @@ export default function MerchantRuleManager({
 
             if (insertError) throw insertError
 
-            // 2. Se richiesto, applica a transazioni esistenti
             if (applyToExisting) {
                 const { data: transactions, error: fetchError } = await supabase
                     .from('transactions')
@@ -60,13 +59,13 @@ export default function MerchantRuleManager({
 
                     if (updateError) throw updateError
 
-                    setSuccess(`✅ Regola creata e applicata a ${transactions.length} transazioni!`)
+                    setSuccess(`Regola creata e applicata a ${transactions.length} transazioni!`)
                     onTransactionsUpdated()
                 } else {
-                    setSuccess('✅ Regola creata! Nessuna transazione esistente corrispondente.')
+                    setSuccess('Regola creata! Nessuna transazione esistente corrispondente.')
                 }
             } else {
-                setSuccess('✅ Regola creata!')
+                setSuccess('Regola creata!')
             }
 
             setPattern('')
@@ -101,60 +100,61 @@ export default function MerchantRuleManager({
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    🔗 Regole Auto-categorizzazione
-                </h2>
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-5">
+            <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-slate-200 text-sm flex items-center gap-2">
+                    <Zap size={14} className="text-yellow-400" />
+                    Regole Smart
+                </h3>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${isAdding
+                            ? 'bg-slate-800 border-slate-700 text-slate-400'
+                            : 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'
+                        }`}
                 >
-                    {isAdding ? '✕ Annulla' : '+ Nuova'}
+                    {isAdding ? <><X size={12} /> Annulla</> : <><Plus size={12} /> Nuova</>}
                 </button>
             </div>
 
-            <p className="text-gray-500 text-sm mb-4">
-                Associa automaticamente le transazioni contenenti una parola chiave a una categoria.
+            <p className="text-slate-500 text-xs mb-4">
+                Auto-categorizza le transazioni future per keyword.
             </p>
 
             {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+                <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs">
                     ❌ {error}
                 </div>
             )}
 
             {success && (
-                <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 text-sm">
-                    {success}
+                <div className="mb-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-emerald-400 text-xs">
+                    ✅ {success}
                 </div>
             )}
 
             {/* Add form */}
             {isAdding && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Parola chiave (ente/merchant)
+                <div className="mb-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-3">
+                    <div>
+                        <label className="block text-xs text-slate-400 mb-1 ml-1">
+                            Parola chiave
                         </label>
                         <input
                             type="text"
                             value={pattern}
                             onChange={(e) => setPattern(e.target.value)}
-                            placeholder="Es: AMAZON, SPOTIFY, UBER..."
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            placeholder="Es: AMAZON, SPOTIFY..."
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-yellow-500 outline-none placeholder-slate-500"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Tutte le transazioni che contengono questa parola verranno categorizzate.
-                        </p>
                     </div>
 
-                    <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <div>
+                        <label className="block text-xs text-slate-400 mb-1 ml-1">Categoria</label>
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-yellow-500 outline-none"
                         >
                             <option value="">Seleziona categoria...</option>
                             {categories.map((cat) => (
@@ -165,24 +165,21 @@ export default function MerchantRuleManager({
                         </select>
                     </div>
 
-                    <div className="mb-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={applyToExisting}
-                                onChange={(e) => setApplyToExisting(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                Applica anche alle transazioni esistenti
-                            </span>
-                        </label>
-                    </div>
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                        <button
+                            type="button"
+                            onClick={() => setApplyToExisting(!applyToExisting)}
+                            className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${applyToExisting ? 'bg-yellow-500' : 'bg-slate-600'}`}
+                        >
+                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${applyToExisting ? 'translate-x-5' : ''}`}></div>
+                        </button>
+                        <span className="text-xs text-slate-300">Applica anche alle transazioni esistenti</span>
+                    </label>
 
                     <button
                         onClick={handleAdd}
                         disabled={isLoading || !pattern.trim() || !selectedCategory}
-                        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        className="w-full bg-yellow-500 text-slate-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-yellow-400 disabled:opacity-50 transition-colors"
                     >
                         {isLoading ? 'Salvataggio...' : 'Salva Regola'}
                     </button>
@@ -190,10 +187,10 @@ export default function MerchantRuleManager({
             )}
 
             {/* Rules list */}
-            <div className="space-y-2">
+            <div className="space-y-1">
                 {rules.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">
-                        Nessuna regola. Crea una regola per auto-categorizzare le transazioni!
+                    <p className="text-slate-500 text-center text-xs py-4">
+                        Nessuna regola. Le transazioni verranno categorizzate manualmente.
                     </p>
                 ) : (
                     rules.map((rule) => {
@@ -201,16 +198,16 @@ export default function MerchantRuleManager({
                         return (
                             <div
                                 key={rule.id}
-                                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 group border"
+                                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/50 group transition-colors"
                             >
-                                <div className="flex items-center gap-3">
-                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="font-mono bg-slate-800 px-2 py-1 rounded-lg text-xs text-slate-300 border border-slate-700 truncate">
                                         {rule.merchant_pattern}
                                     </span>
-                                    <span className="text-gray-400">→</span>
+                                    <ArrowRight size={12} className="text-slate-600 shrink-0" />
                                     {cat && (
                                         <span
-                                            className="flex items-center gap-1 px-2 py-1 rounded text-sm"
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs shrink-0"
                                             style={{ backgroundColor: cat.color + '20', color: cat.color }}
                                         >
                                             {cat.icon} {cat.name}
@@ -219,9 +216,9 @@ export default function MerchantRuleManager({
                                 </div>
                                 <button
                                     onClick={() => handleDelete(rule.id)}
-                                    className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1 shrink-0"
                                 >
-                                    🗑️
+                                    <Trash2 size={14} />
                                 </button>
                             </div>
                         )
