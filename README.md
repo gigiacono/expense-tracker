@@ -111,6 +111,10 @@ expense-tracker/
   - Filtro "Non categorizzati" per individuare transazioni senza categoria.
   - Totale spese giornaliero per ogni gruppo.
 - **SpendingCard**: Spese del mese come numero principale, saldo in basso.
+- **Tab Account - Dark Theme**: Tutti i componenti aggiornati al tema scuro.
+  - Saldo Mensile con navigazione mese e variazione attesa vs reale.
+  - Categorie e Regole Smart con nuovo design.
+- **Regole Smart Ridisegnate**: Vista raggruppata per categoria con modale dedicato per gestire keyword (add/delete).
 - **Import Excel**: Prelievi contanti (ATM) esclusi automaticamente.
 - **Icona App**: Nuova icona personalizzata wallet verde su sfondo navy.
 
