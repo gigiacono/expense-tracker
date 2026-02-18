@@ -27,9 +27,9 @@ export default function SpendingCard({ balance, income, expense }: SpendingCardP
                 </div>
 
                 <div className="mb-6">
-                    <p className="text-emerald-50 text-xs font-medium mb-1 opacity-80 uppercase tracking-wider">Saldo Attuale</p>
+                    <p className="text-emerald-50 text-xs font-medium mb-1 opacity-80 uppercase tracking-wider">Spese del Mese</p>
                     <h2 className="text-4xl font-bold tracking-tight">
-                        € {balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        € {expense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </h2>
                 </div>
 
@@ -39,9 +39,9 @@ export default function SpendingCard({ balance, income, expense }: SpendingCardP
                             <div className="p-1 bg-emerald-400/20 rounded-full">
                                 <TrendingDown size={10} />
                             </div>
-                            <span className="text-xs font-medium">Uscite</span>
+                            <span className="text-xs font-medium">Saldo</span>
                         </div>
-                        <p className="font-semibold text-sm">€ {expense.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                        <p className="font-semibold text-sm">€ {balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
                     </div>
 
                     <div className="flex-1 bg-black/20 rounded-xl p-3 backdrop-blur-sm">
