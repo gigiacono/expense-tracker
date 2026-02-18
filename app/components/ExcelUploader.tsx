@@ -91,10 +91,18 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                             description.includes('VAULT') ||
                             description.includes('TO MY ACCOUNT') ||
                             description.includes('FROM MY ACCOUNT') ||
-                            description.includes('CONTO DEPOSITO') || // Nuovo!
-                            description.includes('RICARICA DI')       // Nuovo!
+                            description.includes('CONTO DEPOSITO') ||
+                            description.includes('RICARICA DI')
 
-                        const shouldExclude = isInterest || isInternalTransfer
+                        // 3. Escludi prelievi contanti (ATM)
+                        const isCashWithdrawal =
+                            type === 'ATM' ||
+                            description.includes('ATM') ||
+                            description.includes('PRELIEVO') ||
+                            description.includes('CASH WITHDRAWAL') ||
+                            description.includes('SPORTELLO')
+
+                        const shouldExclude = isInterest || isInternalTransfer || isCashWithdrawal
 
                         if (shouldExclude) {
                             console.log(`🚫 Transazione esclusa: ${description} (Interessi/Interno)`)

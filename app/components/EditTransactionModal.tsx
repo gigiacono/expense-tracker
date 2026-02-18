@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Transaction, Category } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-import { X, Check, Zap } from 'lucide-react'
+import { X, Check, Zap, Trash2 } from 'lucide-react'
 import { getCategoryIcon } from '@/app/lib/categoryIcons'
 
 type EditTransactionModalProps = {
@@ -12,6 +12,7 @@ type EditTransactionModalProps = {
     categories: Category[]
     onClose: () => void
     onSuccess: (updatedTransaction: Transaction) => void
+    onDelete?: () => void
 }
 
 export default function EditTransactionModal({
@@ -19,7 +20,8 @@ export default function EditTransactionModal({
     transaction,
     categories,
     onClose,
-    onSuccess
+    onSuccess,
+    onDelete
 }: EditTransactionModalProps) {
     const [date, setDate] = useState('')
     const [description, setDescription] = useState('')
@@ -85,6 +87,29 @@ export default function EditTransactionModal({
         } catch (err: any) {
             console.error(err)
             alert('Errore aggiornamento')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!transaction) return
+        if (!confirm('Sei sicuro di voler eliminare questa transazione?')) return
+
+        setIsLoading(true)
+        try {
+            const { error } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', transaction.id)
+
+            if (error) throw error
+
+            onDelete?.()
+            onClose()
+        } catch (err: any) {
+            console.error(err)
+            alert('Errore eliminazione')
         } finally {
             setIsLoading(false)
         }
@@ -217,6 +242,17 @@ export default function EditTransactionModal({
                                 })}
                             </div>
                         </div>
+
+                        {/* Delete Button */}
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm font-medium transition-colors border border-red-500/20 mt-2"
+                        >
+                            <Trash2 size={16} />
+                            Elimina Transazione
+                        </button>
                     </div>
                 </div>
             </div>

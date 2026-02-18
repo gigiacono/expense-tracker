@@ -9,6 +9,7 @@ import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRig
 import BottomNav from './components/BottomNav'
 import SpendingCard from './components/SpendingCard'
 import TrendChart from './components/TrendChart'
+import CategoryPieChart from './components/CategoryPieChart'
 import TransactionItem from './components/TransactionItem'
 import AddTransactionModal from './components/AddTransactionModal'
 import BulkCategoryModal from './components/BulkCategoryModal'
@@ -118,10 +119,9 @@ export default function Home() {
         expense={totalExpense}
       />
 
-      <TrendChart
-        transactions={transactions}
-        currentDate={selectedDate}
-        monthlyBalances={monthlyBalances}
+      <CategoryPieChart
+        transactions={filteredTransactions}
+        categories={categories}
       />
 
       <div>
@@ -250,6 +250,15 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Trend Chart */}
+      <section className="mb-6">
+        <TrendChart
+          transactions={transactions}
+          currentDate={selectedDate}
+          monthlyBalances={monthlyBalances}
+        />
+      </section>
+
       {/* Categories & Rules */}
       <section className="space-y-6">
         <h3 className="font-semibold text-white mb-4">Gestione</h3>
@@ -330,6 +339,10 @@ export default function Home() {
         categories={categories}
         onClose={() => setTransactionToEdit(null)}
         onSuccess={() => {
+          fetchData()
+          setTransactionToEdit(null)
+        }}
+        onDelete={() => {
           fetchData()
           setTransactionToEdit(null)
         }}
