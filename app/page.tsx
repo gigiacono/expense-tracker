@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Transaction, Category, MerchantRule, MonthlyBalance } from '@/lib/types'
-import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react'
+import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRight, Edit2, Filter } from 'lucide-react'
 
 // Components
 import BottomNav from './components/BottomNav'
@@ -39,6 +39,9 @@ export default function Home() {
 
   // Edit State
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
+
+  // Category Filter State
+  const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null)
 
   // Fetch Logic
   const fetchData = useCallback(async () => {
@@ -152,19 +155,36 @@ export default function Home() {
   )
 
   const renderTransactions = () => {
+    // Apply category filter
+    const displayTransactions = filterCategoryId
+      ? filteredTransactions.filter(t => t.category_id === filterCategoryId)
+      : filteredTransactions
+
+    // Calculate totals for displayed transactions
+    const displayExpense = displayTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+    const displayIncome = displayTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0)
+
     // Group by date
-    const grouped = filteredTransactions.reduce((acc, t) => {
+    const grouped = displayTransactions.reduce((acc, t) => {
       const date = t.date.split('T')[0]
       if (!acc[date]) acc[date] = []
       acc[date].push(t)
       return acc
     }, {} as Record<string, Transaction[]>)
 
+    // Categories present in this month's transactions (for filter chips)
+    const usedCategoryIds = [...new Set(filteredTransactions.map(t => t.category_id).filter(Boolean))]
+    const usedCategories = categories.filter(c => usedCategoryIds.includes(c.id))
+
     return (
-      <div className="space-y-6 pb-24 animate-in fade-in duration-300">
+      <div className="space-y-4 pb-24 animate-in fade-in duration-300">
 
         {/* Header with Actions */}
-        <div className="flex justify-between items-center mb-6 pt-2 sticky top-0 bg-slate-950/95 py-4 z-20 backdrop-blur-md">
+        <div className="flex justify-between items-center pt-2 sticky top-0 bg-slate-950/95 py-4 z-20 backdrop-blur-md">
           <h2 className="text-2xl font-bold text-white">Transazioni</h2>
           <button
             onClick={() => setIsBulkModalOpen(true)}
@@ -174,14 +194,53 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Month Selector in Transactions too */}
-        <div className="flex items-center justify-center gap-4 mb-6 bg-slate-900 mx-auto w-fit px-4 py-2 rounded-full border border-slate-800">
+        {/* Month Selector */}
+        <div className="flex items-center justify-center gap-4 bg-slate-900 mx-auto w-fit px-4 py-2 rounded-full border border-slate-800">
           <button onClick={() => changeMonth(-1)} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
           <span className="text-sm font-bold text-slate-200 capitalize w-32 text-center">
             {selectedDate.toLocaleString('it-IT', { month: 'long', year: 'numeric' })}
           </span>
           <button onClick={() => changeMonth(1)} className="text-slate-400 hover:text-white"><ChevronRight size={20} /></button>
         </div>
+
+        {/* Totals Card */}
+        <div className="flex gap-3">
+          <div className="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-red-400 uppercase tracking-wider font-medium">Spese</p>
+            <p className="text-lg font-bold text-red-400">€{displayExpense.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+          </div>
+          <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-emerald-400 uppercase tracking-wider font-medium">Entrate</p>
+            <p className="text-lg font-bold text-emerald-400">€{displayIncome.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+          </div>
+        </div>
+
+        {/* Category Filter Chips */}
+        {usedCategories.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
+            <button
+              onClick={() => setFilterCategoryId(null)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === null
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                  : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+            >
+              Tutte
+            </button>
+            {usedCategories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCategoryId(filterCategoryId === cat.id ? null : cat.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${filterCategoryId === cat.id
+                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                    : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                  }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {Object.keys(grouped).length === 0 ? (
           <div className="text-center py-20 text-slate-500">
