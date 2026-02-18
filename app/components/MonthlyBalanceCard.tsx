@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { MonthlyBalance } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
+import { ChevronLeft, ChevronRight, Edit2, Check, X } from 'lucide-react'
 
 type MonthlyBalanceCardProps = {
     transactionsTotal: { income: number; expense: number }
@@ -83,121 +84,109 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
     }
 
     const prevMonth = () => {
-        if (month === 1) {
-            setMonth(12)
-            setYear(year - 1)
-        } else {
-            setMonth(month - 1)
-        }
+        if (month === 1) { setMonth(12); setYear(year - 1) }
+        else setMonth(month - 1)
     }
 
     const nextMonth = () => {
-        if (month === 12) {
-            setMonth(1)
-            setYear(year + 1)
-        } else {
-            setMonth(month + 1)
-        }
+        if (month === 12) { setMonth(1); setYear(year + 1) }
+        else setMonth(month + 1)
     }
 
-    // Calcoli
     const expectedChange = transactionsTotal.income - transactionsTotal.expense
     const actualChange = (balance?.ending_balance ?? 0) - (balance?.starting_balance ?? 0)
     const difference = actualChange - expectedChange
 
     return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                📊 Saldo Mensile
-            </h2>
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-5">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-slate-200 text-sm">📊 Saldo Mensile</h3>
+                {!isEditing && (
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border bg-indigo-500/15 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/25"
+                    >
+                        <Edit2 size={12} /> {balance ? 'Modifica' : 'Inserisci'}
+                    </button>
+                )}
+            </div>
 
             {/* Month Selector */}
-            <div className="flex items-center justify-between mb-6">
-                <button
-                    onClick={prevMonth}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    ◀
+            <div className="flex items-center justify-center gap-4 mb-5 bg-slate-800/50 mx-auto w-fit px-4 py-2 rounded-full border border-slate-700">
+                <button onClick={prevMonth} className="text-slate-400 hover:text-white transition-colors">
+                    <ChevronLeft size={18} />
                 </button>
-                <span className="text-lg font-medium text-gray-900">
+                <span className="text-sm font-bold text-slate-200 w-28 text-center">
                     {MONTH_NAMES[month - 1]} {year}
                 </span>
-                <button
-                    onClick={nextMonth}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    ▶
+                <button onClick={nextMonth} className="text-slate-400 hover:text-white transition-colors">
+                    <ChevronRight size={18} />
                 </button>
             </div>
 
             {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+                <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs">
                     ❌ {error}
                 </div>
             )}
 
-            {/* Balance Inputs */}
             {isEditing ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Saldo Inizio Mese (€)
-                        </label>
+                        <label className="block text-xs text-slate-400 mb-1 ml-1">Saldo Inizio Mese (€)</label>
                         <input
                             type="number"
                             step="0.01"
                             value={startingBalance}
                             onChange={(e) => setStartingBalance(e.target.value)}
                             placeholder="Es: 1500.00"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500 outline-none placeholder-slate-500"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Saldo Fine Mese (€)
-                        </label>
+                        <label className="block text-xs text-slate-400 mb-1 ml-1">Saldo Fine Mese (€)</label>
                         <input
                             type="number"
                             step="0.01"
                             value={endingBalance}
                             onChange={(e) => setEndingBalance(e.target.value)}
                             placeholder="Es: 1200.00"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500 outline-none placeholder-slate-500"
                         />
                     </div>
                     <div className="flex gap-2">
                         <button
                             onClick={handleSave}
                             disabled={isLoading}
-                            className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-400 disabled:opacity-50 transition-colors"
                         >
-                            {isLoading ? 'Salvataggio...' : '✓ Salva'}
+                            <Check size={14} /> {isLoading ? 'Salvataggio...' : 'Salva'}
                         </button>
                         <button
                             onClick={() => setIsEditing(false)}
-                            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors border border-slate-700"
                         >
-                            Annulla
+                            <X size={14} /> Annulla
                         </button>
                     </div>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {/* Balance Display */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600">Saldo Inizio</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Saldo Inizio</p>
+                            <p className="text-xl font-bold text-slate-200">
                                 {balance?.starting_balance != null
-                                    ? `€${balance.starting_balance.toFixed(2)}`
+                                    ? `€${balance.starting_balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`
                                     : '—'}
                             </p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600">Saldo Fine</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Saldo Fine</p>
+                            <p className="text-xl font-bold text-slate-200">
                                 {balance?.ending_balance != null
-                                    ? `€${balance.ending_balance.toFixed(2)}`
+                                    ? `€${balance.ending_balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`
                                     : '—'}
                             </p>
                         </div>
@@ -205,40 +194,34 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
 
                     {/* Expected vs Actual */}
                     {balance?.starting_balance != null && balance?.ending_balance != null && (
-                        <div className="border-t pt-4 mt-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="border-t border-slate-800 pt-4 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <p className="text-gray-600">Variazione Attesa</p>
-                                    <p className={`font-semibold ${expectedChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {expectedChange >= 0 ? '+' : ''}€{expectedChange.toFixed(2)}
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Variazione Attesa</p>
+                                    <p className={`text-sm font-semibold ${expectedChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {expectedChange >= 0 ? '+' : ''}€{expectedChange.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-600">Variazione Reale</p>
-                                    <p className={`font-semibold ${actualChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {actualChange >= 0 ? '+' : ''}€{actualChange.toFixed(2)}
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Variazione Reale</p>
+                                    <p className={`text-sm font-semibold ${actualChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {actualChange >= 0 ? '+' : ''}€{actualChange.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
                             </div>
 
                             {difference !== 0 && (
-                                <div className={`mt-3 p-3 rounded-lg ${difference > 0 ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                                    <p className={`text-sm ${difference > 0 ? 'text-green-700' : 'text-yellow-700'}`}>
-                                        {difference > 0
-                                            ? `🎉 Hai risparmiato €${difference.toFixed(2)} in più del previsto!`
-                                            : `⚠️ Mancano €${Math.abs(difference).toFixed(2)} rispetto alle transazioni registrate.`}
-                                    </p>
+                                <div className={`p-3 rounded-xl text-xs ${difference > 0
+                                        ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                                        : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                                    }`}>
+                                    {difference > 0
+                                        ? `🎉 Hai risparmiato €${difference.toLocaleString('it-IT', { minimumFractionDigits: 2 })} in più del previsto!`
+                                        : `⚠️ Mancano €${Math.abs(difference).toLocaleString('it-IT', { minimumFractionDigits: 2 })} rispetto alle transazioni registrate.`}
                                 </div>
                             )}
                         </div>
                     )}
-
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        ✏️ {balance ? 'Modifica Saldi' : 'Inserisci Saldi'}
-                    </button>
                 </div>
             )}
         </div>

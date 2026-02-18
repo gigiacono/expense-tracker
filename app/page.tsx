@@ -17,6 +17,7 @@ import BulkCategoryModal from './components/BulkCategoryModal'
 // Legacy Components (kept for Account/Settings tab)
 import CategoryManager from './components/CategoryManager'
 import MerchantRuleManager from './components/MerchantRuleManager'
+import MonthlyBalanceCard from './components/MonthlyBalanceCard'
 import ExcelUploader from './components/ExcelUploader'
 import EditTransactionModal from './components/EditTransactionModal'
 
@@ -338,8 +339,16 @@ export default function Home() {
         />
       </section>
 
+      {/* Monthly Balance Card */}
+      <section>
+        <MonthlyBalanceCard
+          transactionsTotal={{ income: totalIncome, expense: totalExpense }}
+          onUpdate={fetchData}
+        />
+      </section>
+
       {/* Categories & Rules */}
-      <section className="space-y-6">
+      <section className="space-y-4">
         <h3 className="font-semibold text-white mb-4">Gestione</h3>
         <CategoryManager
           categories={categories}
