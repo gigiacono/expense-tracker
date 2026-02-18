@@ -258,24 +258,31 @@ export default function Home() {
             <p>Nessuna transazione in questo periodo.</p>
           </div>
         ) : (
-          Object.entries(grouped).map(([date, items]) => (
-            <div key={date}>
-              <h3 className="text-slate-500 text-xs font-bold uppercase mb-3 sticky top-16 bg-slate-950 py-2 z-10 opacity-90">
-                {new Date(date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </h3>
-              <div className="space-y-3">
-                {items.map(t => (
-                  <TransactionItem
-                    key={t.id}
-                    transaction={t}
-                    category={categories.find(c => c.id === t.category_id)}
-                    onClick={() => setTransactionToEdit(t)}
-                  />
-                ))}
+          Object.entries(grouped).map(([date, items]) => {
+            const dayTotal = items.reduce((sum, t) => sum + t.amount, 0)
+            return (
+              <div key={date}>
+                <div className="flex justify-between items-center sticky top-16 bg-slate-950 py-2 z-10 opacity-90 mb-3">
+                  <h3 className="text-slate-500 text-xs font-bold uppercase">
+                    {new Date(date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </h3>
+                  <span className={`text-xs font-bold ${dayTotal < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {dayTotal < 0 ? '' : '+'}€{Math.abs(dayTotal).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {items.map(t => (
+                    <TransactionItem
+                      key={t.id}
+                      transaction={t}
+                      category={categories.find(c => c.id === t.category_id)}
+                      onClick={() => setTransactionToEdit(t)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
-        )}
+            )
+          }))}
       </div>
     )
   }
