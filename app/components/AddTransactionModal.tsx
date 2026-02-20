@@ -48,6 +48,7 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess, catego
             const finalDescription = description.trim() || 'Nuova transazione';
 
             const { error } = await supabase.from('transactions').insert({
+                revolut_id: `manual_${crypto.randomUUID()}`,
                 description: finalDescription,
                 amount: type === 'expense' ? -Math.abs(finalAmount) : Math.abs(finalAmount),
                 date: new Date(date).toISOString(),
@@ -62,9 +63,9 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess, catego
 
             onSuccess();
             onClose();
-        } catch (err) {
-            console.error(err);
-            alert('Errore nel salvataggio');
+        } catch (err: any) {
+            console.error('Supabase Error:', err);
+            alert(`Errore nel salvataggio: ${err?.message || 'Errore sconosciuto'}`);
         } finally {
             setLoading(false);
         }
