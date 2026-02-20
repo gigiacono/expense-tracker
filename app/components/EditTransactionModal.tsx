@@ -5,6 +5,7 @@ import { Transaction, Category } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import { X, Check, Zap, Trash2 } from 'lucide-react'
 import { getCategoryIcon } from '@/app/lib/categoryIcons'
+import NumericKeyboard from './NumericKeyboard'
 
 type EditTransactionModalProps = {
     isOpen: boolean
@@ -158,16 +159,13 @@ export default function EditTransactionModal({
                             </button>
                         </div>
 
-                        <div className="relative inline-block w-full">
-                            <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold ${type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>€</span>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="0.00"
-                                className="w-full bg-transparent text-5xl font-bold text-center text-white placeholder-slate-600 focus:outline-none pl-8"
-                            />
+                        <div className="flex justify-center items-baseline gap-1 mt-6 mb-2">
+                            <span className={`text-3xl font-bold ${type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>€</span>
+                            <div className={`text-5xl font-bold tracking-tight ${amount ? 'text-white' : 'text-slate-600'}`}>
+                                {amount || '0.00'}
+                            </div>
                         </div>
+                        <NumericKeyboard value={amount.toString()} onChange={setAmount} />
                     </div>
 
                     {/* Form Fields */}

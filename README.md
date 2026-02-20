@@ -101,6 +101,10 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.1.1 (20/02/2026) - Tastiera Personalizzata & Fix ⌨️
+- **Tastiera Numerica Custom**: Creata e integrata una tastiera numerica in stile con l'app nei modali di inserimento e modifica.
+- **Fix Inserimento Manuale**: Resa opzionale la descrizione, risolvendo il blocco durante l'inserimento manuale di transazioni.
+
 ### v2.1.0 (18/02/2026) - Nuove Funzionalità 🚀
 - **Elimina Transazione**: Pulsante rosso nel modale di modifica con conferma.
 - **Grafico a Torta** 🍩: Donut chart con ripartizione spese per categoria nella Home.

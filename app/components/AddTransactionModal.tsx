@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { X, Check, Upload, PenTool } from 'lucide-react';
 import { getCategoryIcon } from '@/app/lib/categoryIcons';
 import ExcelUploader from './ExcelUploader';
+import NumericKeyboard from './NumericKeyboard';
 
 interface AddTransactionModalProps {
     isOpen: boolean;
@@ -39,14 +40,15 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess, catego
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!amount || !description) return;
+        if (!amount) return;
 
         setLoading(true);
         try {
             const finalAmount = parseFloat(amount.replace(',', '.'));
+            const finalDescription = description.trim() || 'Nuova transazione';
 
             const { error } = await supabase.from('transactions').insert({
-                description,
+                description: finalDescription,
                 amount: type === 'expense' ? -Math.abs(finalAmount) : Math.abs(finalAmount),
                 date: new Date(date).toISOString(),
                 type,
@@ -137,17 +139,13 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess, catego
                                     </button>
                                 </div>
 
-                                <div className="relative inline-block w-full">
-                                    <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold ${type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>€</span>
-                                    <input
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        placeholder="0.00"
-                                        className="w-full bg-transparent text-5xl font-bold text-center text-white placeholder-slate-600 focus:outline-none pl-8"
-                                        autoFocus
-                                    />
+                                <div className="flex justify-center items-baseline gap-1 mt-6 mb-2">
+                                    <span className={`text-3xl font-bold ${type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>€</span>
+                                    <div className={`text-5xl font-bold tracking-tight ${amount ? 'text-white' : 'text-slate-600'}`}>
+                                        {amount || '0.00'}
+                                    </div>
                                 </div>
+                                <NumericKeyboard value={amount} onChange={setAmount} />
                             </div>
 
                             <div className="space-y-4">
