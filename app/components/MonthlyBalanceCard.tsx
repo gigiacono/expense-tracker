@@ -41,12 +41,29 @@ export default function MonthlyBalanceCard({ transactions, onUpdate }: MonthlyBa
 
             if (error && error.code !== 'PGRST116') throw error
 
-            setBalance(data)
             if (data) {
+                setBalance(data)
                 setStartingBalance(data.starting_balance?.toString() || '')
                 setEndingBalance(data.ending_balance?.toString() || '')
             } else {
-                setStartingBalance('')
+                // No record for this month — check previous month's ending_balance
+                const prevMonth = month === 1 ? 12 : month - 1
+                const prevYear = month === 1 ? year - 1 : year
+                const { data: prevData } = await supabase
+                    .from('monthly_balances')
+                    .select('ending_balance')
+                    .eq('year', prevYear)
+                    .eq('month', prevMonth)
+                    .single()
+
+                if (prevData?.ending_balance != null) {
+                    // Auto-set starting balance from previous month
+                    setBalance({ year, month, starting_balance: prevData.ending_balance, ending_balance: null } as MonthlyBalance)
+                    setStartingBalance(prevData.ending_balance.toString())
+                } else {
+                    setBalance(null)
+                    setStartingBalance('')
+                }
                 setEndingBalance('')
             }
         } catch (err: any) {
@@ -59,11 +76,13 @@ export default function MonthlyBalanceCard({ transactions, onUpdate }: MonthlyBa
         setError(null)
 
         try {
+            const parsedEnding = endingBalance ? parseFloat(endingBalance) : null
+
             const data = {
                 year,
                 month,
                 starting_balance: startingBalance ? parseFloat(startingBalance) : null,
-                ending_balance: endingBalance ? parseFloat(endingBalance) : null,
+                ending_balance: parsedEnding,
                 updated_at: new Date().toISOString()
             }
 
@@ -72,6 +91,30 @@ export default function MonthlyBalanceCard({ transactions, onUpdate }: MonthlyBa
                 .upsert(data, { onConflict: 'year,month' })
 
             if (error) throw error
+
+            // Propagate ending balance as next month's starting balance
+            if (parsedEnding != null) {
+                const nextMonth = month === 12 ? 1 : month + 1
+                const nextYear = month === 12 ? year + 1 : year
+
+                // Fetch existing next month record to preserve its ending_balance
+                const { data: nextData } = await supabase
+                    .from('monthly_balances')
+                    .select('*')
+                    .eq('year', nextYear)
+                    .eq('month', nextMonth)
+                    .single()
+
+                await supabase
+                    .from('monthly_balances')
+                    .upsert({
+                        year: nextYear,
+                        month: nextMonth,
+                        starting_balance: parsedEnding,
+                        ending_balance: nextData?.ending_balance ?? null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'year,month' })
+            }
 
             setIsEditing(false)
             fetchBalance()
