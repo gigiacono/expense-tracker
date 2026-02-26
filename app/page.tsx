@@ -342,7 +342,7 @@ export default function Home() {
       {/* Monthly Balance Card */}
       <section>
         <MonthlyBalanceCard
-          transactionsTotal={{ income: totalIncome, expense: totalExpense }}
+          transactions={transactions}
           onUpdate={fetchData}
         />
       </section>

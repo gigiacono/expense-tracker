@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MonthlyBalance } from '@/lib/types'
+import { MonthlyBalance, Transaction } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight, Edit2, Check, X } from 'lucide-react'
 
 type MonthlyBalanceCardProps = {
-    transactionsTotal: { income: number; expense: number }
+    transactions: Transaction[]
     onUpdate?: () => void
 }
 
@@ -15,7 +15,7 @@ const MONTH_NAMES = [
     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ]
 
-export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: MonthlyBalanceCardProps) {
+export default function MonthlyBalanceCard({ transactions, onUpdate }: MonthlyBalanceCardProps) {
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -93,9 +93,16 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
         else setMonth(month + 1)
     }
 
-    const expectedChange = transactionsTotal.income - transactionsTotal.expense
-    const actualChange = (balance?.ending_balance ?? 0) - (balance?.starting_balance ?? 0)
-    const difference = actualChange - expectedChange
+    const monthlyTransactions = transactions.filter(t => {
+        const d = new Date(t.date)
+        return d.getMonth() + 1 === month && d.getFullYear() === year
+    })
+    const income = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+    const expense = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0)
+    const expectedChange = income - expense
+
+    const accountingBalance = (balance?.starting_balance ?? 0) + expectedChange
+    const difference = (balance?.ending_balance ?? 0) - accountingBalance
 
     return (
         <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-5">
@@ -144,7 +151,7 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
                         />
                     </div>
                     <div>
-                        <label className="block text-xs text-slate-400 mb-1 ml-1">Saldo Fine Mese (€)</label>
+                        <label className="block text-xs text-slate-400 mb-1 ml-1">Saldo Fine Mese (Effettivo) (€)</label>
                         <input
                             type="number"
                             step="0.01"
@@ -173,18 +180,26 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
             ) : (
                 <div className="space-y-4">
                     {/* Balance Display */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Saldo Inizio</p>
-                            <p className="text-xl font-bold text-slate-200">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Inizio Mese</p>
+                            <p className="text-lg font-bold text-slate-200">
                                 {balance?.starting_balance != null
                                     ? `€${balance.starting_balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`
                                     : '—'}
                             </p>
                         </div>
+                        <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/30">
+                            <p className="text-[10px] text-blue-400 uppercase tracking-wider font-medium mb-1">Contabile</p>
+                            <p className="text-lg font-bold text-blue-100">
+                                {balance?.starting_balance != null
+                                    ? `€${accountingBalance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`
+                                    : '—'}
+                            </p>
+                        </div>
                         <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Saldo Fine</p>
-                            <p className="text-xl font-bold text-slate-200">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Effettivo (Fine)</p>
+                            <p className="text-lg font-bold text-slate-200">
                                 {balance?.ending_balance != null
                                     ? `€${balance.ending_balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`
                                     : '—'}
@@ -195,29 +210,18 @@ export default function MonthlyBalanceCard({ transactionsTotal, onUpdate }: Mont
                     {/* Expected vs Actual */}
                     {balance?.starting_balance != null && balance?.ending_balance != null && (
                         <div className="border-t border-slate-800 pt-4 space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Variazione Attesa</p>
-                                    <p className={`text-sm font-semibold ${expectedChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {expectedChange >= 0 ? '+' : ''}€{expectedChange.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Variazione Reale</p>
-                                    <p className={`text-sm font-semibold ${actualChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {actualChange >= 0 ? '+' : ''}€{actualChange.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {difference !== 0 && (
+                            {difference !== 0 ? (
                                 <div className={`p-3 rounded-xl text-xs ${difference > 0
-                                        ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                                        : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                                    : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
                                     }`}>
                                     {difference > 0
-                                        ? `🎉 Hai risparmiato €${difference.toLocaleString('it-IT', { minimumFractionDigits: 2 })} in più del previsto!`
-                                        : `⚠️ Mancano €${Math.abs(difference).toLocaleString('it-IT', { minimumFractionDigits: 2 })} rispetto alle transazioni registrate.`}
+                                        ? `🎉 Hai risparmiato €${difference.toLocaleString('it-IT', { minimumFractionDigits: 2 })} in più del previsto (Effettivo > Contabile)`
+                                        : `⚠️ Mancano €${Math.abs(difference).toLocaleString('it-IT', { minimumFractionDigits: 2 })} rispetto alle transazioni registrate (Effettivo < Contabile)`}
+                                </div>
+                            ) : (
+                                <div className="p-3 rounded-xl text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                    ✅ Il saldo effettivo corrisponde perfettamente al saldo contabile!
                                 </div>
                             )}
                         </div>
