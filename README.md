@@ -101,6 +101,11 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.2.0 (26/02/2026) - Saldo Contabile & Tracciamento Spese 📊
+- **Triplo Saldo**: La card Saldo Mensile ora mostra 3 valori: **Inizio Mese**, **Contabile** (calcolato automaticamente da entrate/spese tracciate) e **Effettivo** (inserito manualmente dal conto reale).
+- **Confronto Contabile vs Effettivo**: Feedback visivo immediato per capire se stai tracciando tutte le spese, dimenticandone qualcuna, o tracciandone in più.
+- **Propagazione Automatica Saldo**: Il saldo effettivo di fine mese viene automaticamente impostato come saldo di inizio del mese successivo, rimanendo comunque editabile manualmente.
+
 ### v2.1.1 (20/02/2026) - Tastiera Personalizzata & Fix ⌨️
 - **Tastiera Numerica Custom**: Creata e integrata una tastiera numerica in stile con l'app nei modali di inserimento e modifica.
 - **Fix Inserimento Manuale**: Resa opzionale la descrizione, risolvendo il blocco durante l'inserimento manuale di transazioni.
