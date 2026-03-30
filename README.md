@@ -101,6 +101,9 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.2.1 (30/03/2026) - Import Transazioni In Sospeso 🕐
+- **Pagamenti In Sospeso**: L'import Excel ora include anche le transazioni con stato **"In Sospeso"** / **"Pending"**, oltre a quelle completate.
+
 ### v2.2.0 (26/02/2026) - Saldo Contabile & Tracciamento Spese 📊
 - **Triplo Saldo**: La card Saldo Mensile ora mostra 3 valori: **Inizio Mese**, **Contabile** (calcolato automaticamente da entrate/spese tracciate) e **Effettivo** (inserito manualmente dal conto reale).
 - **Confronto Contabile vs Effettivo**: Feedback visivo immediato per capire se stai tracciando tutte le spese, dimenticandone qualcuna, o tracciandone in più.

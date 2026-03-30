@@ -70,10 +70,11 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 // Mappa al nostro formato - supporta sia colonne in italiano che inglese
                 const transactions: ParsedTransaction[] = jsonData
                     .filter(row => {
-                        // Controlla State in inglese o italiano (COMPLETED/COMPLETATO)
-                        const state = (row.State || row.Stato || '').toString().toUpperCase()
+                        // Controlla State in inglese o italiano (COMPLETED/COMPLETATO/PENDING/IN SOSPESO)
+                        const state = (row.State || row.Stato || '').toString().toUpperCase().trim()
                         const hasAmount = row.Amount !== undefined || row.Importo !== undefined
                         const isCompleted = state === 'COMPLETED' || state === 'COMPLETATO'
+                        const isPending = state === 'PENDING' || state === 'IN SOSPESO'
 
                         // FILTRO ESCLUSIONI RICHIESTE DALL'UTENTE
                         const description = (row.Description || row.Descrizione || '').toUpperCase()
@@ -110,7 +111,7 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                         }
 
                         // console.log(`🔍 Riga: state="${state}", hasAmount=${hasAmount}, isCompleted=${isCompleted}`)
-                        return isCompleted && hasAmount
+                        return (isCompleted || isPending) && hasAmount
                     })
                     .map((row) => {
                         // Supporta sia nomi inglesi che italiani
@@ -149,7 +150,7 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                 console.log('✅ Transazioni valide:', transactions.length)
 
                 if (transactions.length === 0) {
-                    setError(`Nessuna transazione valida trovata. Verifica che il file contenga transazioni con stato COMPLETATO. Righe totali nel file: ${jsonData.length}`)
+                    setError(`Nessuna transazione valida trovata. Verifica che il file contenga transazioni con stato COMPLETATO o IN SOSPESO. Righe totali nel file: ${jsonData.length}`)
                 }
 
                 setParsedData(transactions)
