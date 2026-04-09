@@ -37,7 +37,23 @@ export async function ensureRecurringTransactions(
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear
   })
 
-  // 3. Per ogni template, controlla se esiste già nel mese corrente
+  // 2b. Fetch esclusioni ricorrenti per il mese corrente
+  const { data: exclusions } = await supabase
+    .from('recurring_exclusions')
+    .select('description, amount, type')
+    .eq('year', currentYear)
+    .eq('month', currentMonth + 1) // DB usa 1-12
+
+  const isExcluded = (desc: string, amount: number, type: string): boolean => {
+    if (!exclusions || exclusions.length === 0) return false
+    return exclusions.some(e =>
+      e.description.toLowerCase().trim() === desc.toLowerCase().trim() &&
+      Math.abs(Number(e.amount)) === Math.abs(amount) &&
+      e.type === type
+    )
+  }
+
+  // 3. Per ogni template, controlla se esiste già nel mese corrente o è stata esclusa
   const toInsert: any[] = []
 
   for (const [key, template] of recurringTemplates) {
@@ -49,6 +65,12 @@ export async function ensureRecurringTransactions(
     })
 
     if (!alreadyExists) {
+      // Controlla se l'utente ha esplicitamente eliminato questa ricorrente per questo mese
+      if (isExcluded(template.description, template.amount, template.type)) {
+        console.log(`⏭️ Ricorrente esclusa per questo mese: ${template.description}`)
+        continue
+      }
+
       // Calcola la data: stesso giorno del template, ma nel mese corrente
       const templateDate = new Date(template.date)
       let day = templateDate.getDate()

@@ -99,6 +99,23 @@ export default function EditTransactionModal({
 
         setIsLoading(true)
         try {
+            // Se la transazione è ricorrente, registra un'esclusione per evitare la rigenerazione
+            if (transaction.is_recurring) {
+                const txDate = new Date(transaction.date)
+                await supabase
+                    .from('recurring_exclusions')
+                    .upsert({
+                        year: txDate.getFullYear(),
+                        month: txDate.getMonth() + 1,
+                        description: transaction.description,
+                        amount: Math.abs(transaction.amount),
+                        type: transaction.type
+                    }, {
+                        onConflict: 'year,month,description,amount,type',
+                        ignoreDuplicates: true
+                    })
+            }
+
             const { error } = await supabase
                 .from('transactions')
                 .delete()
