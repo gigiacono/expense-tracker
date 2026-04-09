@@ -73,7 +73,8 @@ export async function ensureRecurringTransactions(
 
       // Calcola la data: stesso giorno del template, ma nel mese corrente
       const templateDate = new Date(template.date)
-      let day = templateDate.getDate()
+      // Usa l'UTC o parse della stringa per evitare shift di fuso orario
+      let day = parseInt(template.date.split('-')[2] || templateDate.getUTCDate().toString())
 
       // Gestisci mesi con meno giorni (es. 31 in un mese da 30)
       const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
@@ -81,7 +82,10 @@ export async function ensureRecurringTransactions(
         day = lastDayOfMonth
       }
 
-      const newDate = new Date(currentYear, currentMonth, day)
+      // Costruisci data senza passare dal fuso orario locale
+      const monthStr = String(currentMonth + 1).padStart(2, '0')
+      const dayStr = String(day).padStart(2, '0')
+      const newDateStr = `${currentYear}-${monthStr}-${dayStr}`
 
       // ID deterministico per evitare duplicati su ricaricamenti multipli
       const descHash = template.description.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
@@ -92,7 +96,7 @@ export async function ensureRecurringTransactions(
         revolut_id: revolutId,
         description: template.description,
         amount: template.type === 'expense' ? -Math.abs(template.amount) : Math.abs(template.amount),
-        date: newDate.toISOString(),
+        date: newDateStr,
         type: template.type,
         category_id: template.category_id || null,
         is_manual: true,
