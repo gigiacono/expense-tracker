@@ -101,6 +101,10 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.3.0 (09/04/2026) - Transazioni Ricorrenti Automatiche 🔄
+- **Auto-Generazione Mensile**: Le transazioni segnate come "ricorrenti" vengono ora inserite automaticamente all'inizio di ogni mese. Al caricamento dell'app, il sistema verifica se mancano e le crea con lo stesso giorno, importo, categoria e tipo.
+- **Deduplicazione Intelligente**: ID deterministici prevengono duplicati anche su ricaricamenti multipli della pagina.
+
 ### v2.2.1 (30/03/2026) - Import Transazioni In Sospeso 🕐
 - **Pagamenti In Sospeso**: L'import Excel ora include anche le transazioni con stato **"In Sospeso"** / **"Pending"**, oltre a quelle completate.
 

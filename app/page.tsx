@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Transaction, Category, MerchantRule, MonthlyBalance } from '@/lib/types'
+import { ensureRecurringTransactions } from '@/lib/generateRecurring'
 import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRight, Edit2, Filter } from 'lucide-react'
 
 // Components
@@ -54,7 +55,20 @@ export default function Home() {
         supabase.from('monthly_balances').select('*')
       ])
 
-      if (transRes.data) setTransactions(transRes.data)
+      if (transRes.data) {
+        setTransactions(transRes.data)
+
+        // Genera transazioni ricorrenti mancanti per il mese corrente
+        const generated = await ensureRecurringTransactions(transRes.data, supabase)
+        if (generated) {
+          // Ri-fetch per includere le nuove transazioni generate
+          const { data: updatedTrans } = await supabase
+            .from('transactions')
+            .select('*, categories(id, name, icon, color)')
+            .order('date', { ascending: false })
+          if (updatedTrans) setTransactions(updatedTrans)
+        }
+      }
       if (catsRes.data) setCategories(catsRes.data)
       if (rulesRes.data) setRules(rulesRes.data)
       if (balRes.data) setMonthlyBalances(balRes.data)
