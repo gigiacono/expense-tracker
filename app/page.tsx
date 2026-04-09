@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Transaction, Category, MerchantRule, MonthlyBalance } from '@/lib/types'
+import { Transaction, Category, MerchantRule, MonthlyBalance, BudgetConfig, CategoryMacroMapping } from '@/lib/types'
 import { ensureRecurringTransactions } from '@/lib/generateRecurring'
 import { Settings, LogOut, Upload, FileText, Smartphone, ChevronLeft, ChevronRight, Edit2, Filter } from 'lucide-react'
 
@@ -21,6 +21,8 @@ import MerchantRuleManager from './components/MerchantRuleManager'
 import MonthlyBalanceCard from './components/MonthlyBalanceCard'
 import ExcelUploader from './components/ExcelUploader'
 import EditTransactionModal from './components/EditTransactionModal'
+import BudgetManager from './components/BudgetManager'
+import BudgetOverview from './components/BudgetOverview'
 
 type Tab = 'home' | 'transactions' | 'recurring' | 'account'
 
@@ -38,6 +40,8 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([])
   const [rules, setRules] = useState<MerchantRule[]>([])
   const [monthlyBalances, setMonthlyBalances] = useState<MonthlyBalance[]>([])
+  const [budgetConfigs, setBudgetConfigs] = useState<BudgetConfig[]>([])
+  const [categoryMappings, setCategoryMappings] = useState<CategoryMacroMapping[]>([])
 
   // Edit State
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
@@ -48,11 +52,13 @@ export default function Home() {
   // Fetch Logic
   const fetchData = useCallback(async () => {
     try {
-      const [transRes, catsRes, rulesRes, balRes] = await Promise.all([
+      const [transRes, catsRes, rulesRes, balRes, budgetRes, mappingRes] = await Promise.all([
         supabase.from('transactions').select('*, categories(id, name, icon, color)').order('date', { ascending: false }),
         supabase.from('categories').select('*').order('name'),
         supabase.from('merchant_rules').select('*'),
-        supabase.from('monthly_balances').select('*')
+        supabase.from('monthly_balances').select('*'),
+        supabase.from('budget_config').select('*'),
+        supabase.from('category_macro_mapping').select('*')
       ])
 
       if (transRes.data) {
@@ -72,6 +78,8 @@ export default function Home() {
       if (catsRes.data) setCategories(catsRes.data)
       if (rulesRes.data) setRules(rulesRes.data)
       if (balRes.data) setMonthlyBalances(balRes.data)
+      if (budgetRes.data) setBudgetConfigs(budgetRes.data)
+      if (mappingRes.data) setCategoryMappings(mappingRes.data)
     } catch (err) {
       console.error('Error fetching data:', err)
     } finally {
@@ -140,6 +148,14 @@ export default function Home() {
       <CategoryPieChart
         transactions={filteredTransactions}
         categories={categories}
+      />
+
+      <BudgetOverview
+        transactions={filteredTransactions}
+        categories={categories}
+        budgetConfigs={budgetConfigs}
+        categoryMappings={categoryMappings}
+        monthlyIncome={totalIncome}
       />
 
       <div>
@@ -357,6 +373,16 @@ export default function Home() {
       <section>
         <MonthlyBalanceCard
           transactions={transactions}
+          onUpdate={fetchData}
+        />
+      </section>
+
+      {/* Budget Manager */}
+      <section>
+        <BudgetManager
+          categories={categories}
+          budgetConfigs={budgetConfigs}
+          categoryMappings={categoryMappings}
           onUpdate={fetchData}
         />
       </section>

@@ -101,6 +101,12 @@ expense-tracker/
 
 ## 📝 Changelog Recente
 
+### v2.4.0 (09/04/2026) - Budget con Macro-Categorie 💰
+- **3 Macro-Categorie**: Necessità 🏠, Sfizi ✨, Investimenti 📈 — assegna ogni categoria di spesa a una macro.
+- **Allocazione Percentuale**: Imposta la % delle entrate per ogni macro (es. 50/30/20) nella tab Account.
+- **Budget Rimanente in Home**: Widget con barre di progresso sotto il grafico a torta, mostra speso vs budget per ogni macro.
+- **Sforamento Visivo**: La barra diventa rossa quando superi il budget di una macro-categoria.
+
 ### v2.3.0 (09/04/2026) - Transazioni Ricorrenti Automatiche 🔄
 - **Auto-Generazione Mensile**: Le transazioni segnate come "ricorrenti" vengono ora inserite automaticamente all'inizio di ogni mese. Al caricamento dell'app, il sistema verifica se mancano e le crea con lo stesso giorno, importo, categoria e tipo.
 - **Deduplicazione Intelligente**: ID deterministici prevengono duplicati anche su ricaricamenti multipli della pagina.

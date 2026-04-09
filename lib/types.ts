@@ -68,3 +68,20 @@ export type RevolutTransaction = {
   Stato?: string
   Saldo?: number
 }
+
+export type MacroCategory = 'necessita' | 'sfizi' | 'investimenti'
+
+export type BudgetConfig = {
+  id: string
+  macro_category: MacroCategory
+  percentage: number
+  created_at: string
+  updated_at: string
+}
+
+export type CategoryMacroMapping = {
+  id: string
+  category_id: string
+  macro_category: MacroCategory
+  created_at: string
+}
