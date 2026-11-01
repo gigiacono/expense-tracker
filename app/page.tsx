@@ -26,6 +26,25 @@ import BudgetOverview from './components/BudgetOverview'
 
 type Tab = 'home' | 'transactions' | 'recurring' | 'account'
 
+// Supabase restituisce al massimo 1000 righe per richiesta: scarica le transazioni a pagine
+const PAGE_SIZE = 1000
+
+async function fetchAllTransactions(): Promise<Transaction[]> {
+  const all: Transaction[] = []
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*, categories(id, name, icon, color)')
+      .order('date', { ascending: false })
+      .order('id') // ordinamento stabile tra una pagina e l'altra
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error) throw error
+    all.push(...data)
+    if (data.length < PAGE_SIZE) return all
+  }
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -52,8 +71,8 @@ export default function Home() {
   // Fetch Logic
   const fetchData = useCallback(async () => {
     try {
-      const [transRes, catsRes, rulesRes, balRes, budgetRes, mappingRes] = await Promise.all([
-        supabase.from('transactions').select('*, categories(id, name, icon, color)').order('date', { ascending: false }),
+      const [allTransactions, catsRes, rulesRes, balRes, budgetRes, mappingRes] = await Promise.all([
+        fetchAllTransactions(),
         supabase.from('categories').select('*').order('name'),
         supabase.from('merchant_rules').select('*'),
         supabase.from('monthly_balances').select('*'),
@@ -61,19 +80,13 @@ export default function Home() {
         supabase.from('category_macro_mapping').select('*')
       ])
 
-      if (transRes.data) {
-        setTransactions(transRes.data)
+      setTransactions(allTransactions)
 
-        // Genera transazioni ricorrenti mancanti per il mese corrente
-        const generated = await ensureRecurringTransactions(transRes.data, supabase)
-        if (generated) {
-          // Ri-fetch per includere le nuove transazioni generate
-          const { data: updatedTrans } = await supabase
-            .from('transactions')
-            .select('*, categories(id, name, icon, color)')
-            .order('date', { ascending: false })
-          if (updatedTrans) setTransactions(updatedTrans)
-        }
+      // Genera transazioni ricorrenti mancanti per il mese corrente
+      const generated = await ensureRecurringTransactions(allTransactions, supabase)
+      if (generated) {
+        // Ri-fetch per includere le nuove transazioni generate
+        setTransactions(await fetchAllTransactions())
       }
       if (catsRes.data) setCategories(catsRes.data)
       if (rulesRes.data) setRules(rulesRes.data)
@@ -93,11 +106,8 @@ export default function Home() {
 
   // Navigation Logic
   const changeMonth = (increment: number) => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev)
-      newDate.setMonth(newDate.getMonth() + increment)
-      return newDate
-    })
+    // Parte dal giorno 1: con setMonth il 31 ottobre - 1 mese diventerebbe il "31 settembre" = 1 ottobre
+    setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth() + increment, 1))
   }
 
   // Filter Transactions by Selected Month

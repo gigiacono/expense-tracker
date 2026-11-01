@@ -43,17 +43,14 @@ export default function MerchantRuleManager({
                 .insert({ merchant_pattern: newPattern.trim(), category_id: newCategoryId })
             if (error) throw error
 
-            // Apply to existing
+            // Apply to existing (update diretto: nessun limite di 1000 righe)
             const { data: txs } = await supabase
                 .from('transactions')
-                .select('id')
+                .update({ category_id: newCategoryId })
                 .ilike('description', `%${newPattern.trim()}%`)
+                .select('id')
 
             if (txs && txs.length > 0) {
-                await supabase
-                    .from('transactions')
-                    .update({ category_id: newCategoryId })
-                    .in('id', txs.map(t => t.id))
                 onTransactionsUpdated()
             }
 
