@@ -3,15 +3,8 @@
 import { useState, useCallback } from 'react'
 import * as XLSX from 'xlsx'
 import { Category, RevolutTransaction } from '@/lib/types'
-
-type ParsedTransaction = {
-    date: string
-    description: string
-    amount: number
-    currency: string
-    type: 'expense' | 'income'
-    revolut_id: string
-}
+import { ParsedTransaction, isExcludedTransaction } from '@/lib/importRules'
+import { extractPdfPages, parseRevolutStatement } from '@/lib/revolutPdf'
 
 type ExcelUploaderProps = {
     categories: Category[]
@@ -76,36 +69,11 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
                         const isCompleted = state === 'COMPLETED' || state === 'COMPLETATO'
                         const isPending = state === 'PENDING' || state === 'IN SOSPESO'
 
-                        // FILTRO ESCLUSIONI RICHIESTE DALL'UTENTE
-                        const description = (row.Description || row.Descrizione || '').toUpperCase()
-                        const type = (row.Type || row.Tipo || '').toUpperCase()
+                        // FILTRO ESCLUSIONI RICHIESTE DALL'UTENTE (interessi, spostamenti interni, ATM)
+                        const description = row.Description || row.Descrizione || ''
+                        const type = row.Type || row.Tipo || ''
 
-                        // 1. Escludi interessi
-                        const isInterest = description.includes('INTERESSI') || description.includes('INTEREST')
-
-                        // 2. Escludi spostamenti interni (risparmi, salvadanai, etc)
-                        const isInternalTransfer =
-                            description.includes('SAVINGS') ||
-                            description.includes('RISPARMI') ||
-                            description.includes('SALVADANAIO') ||
-                            description.includes('POCKET') ||
-                            description.includes('VAULT') ||
-                            description.includes('TO MY ACCOUNT') ||
-                            description.includes('FROM MY ACCOUNT') ||
-                            description.includes('CONTO DEPOSITO') ||
-                            description.includes('RICARICA DI')
-
-                        // 3. Escludi prelievi contanti (ATM)
-                        const isCashWithdrawal =
-                            type === 'ATM' ||
-                            description.includes('ATM') ||
-                            description.includes('PRELIEVO') ||
-                            description.includes('CASH WITHDRAWAL') ||
-                            description.includes('SPORTELLO')
-
-                        const shouldExclude = isInterest || isInternalTransfer || isCashWithdrawal
-
-                        if (shouldExclude) {
+                        if (isExcludedTransaction(description, type)) {
                             console.log(`🚫 Transazione esclusa: ${description} (Interessi/Interno)`)
                             return false
                         }
@@ -168,24 +136,74 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
         reader.readAsArrayBuffer(file)
     }, [])
 
+    const parsePdfFile = useCallback(async (file: File) => {
+        setIsLoading(true)
+        setError(null)
+        setParsedData([])
+        setImportResult(null)
+
+        try {
+            const pdfjs = await import('pdfjs-dist')
+            pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
+
+            const pages = await extractPdfPages(pdfjs, await file.arrayBuffer())
+            const allTransactions = parseRevolutStatement(pages)
+            console.log('📄 Transazioni trovate nel PDF:', allTransactions.length)
+
+            const transactions = allTransactions.filter(t => {
+                if (isExcludedTransaction(t.description)) {
+                    console.log(`🚫 Transazione esclusa: ${t.description} (Interessi/Interno)`)
+                    return false
+                }
+                return true
+            })
+
+            console.log('✅ Transazioni valide:', transactions.length)
+
+            if (transactions.length === 0) {
+                setError(allTransactions.length === 0
+                    ? 'Nessuna transazione trovata. Verifica che il PDF sia un estratto conto Revolut.'
+                    : `Nessuna transazione valida trovata: tutte le ${allTransactions.length} transazioni sono movimenti interni, interessi o prelievi.`)
+            }
+
+            setParsedData(transactions)
+        } catch (err: any) {
+            console.error('❌ Errore parsing PDF:', err)
+            setError(`Errore nella lettura del PDF: ${err.message}`)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [])
+
+    const handleFile = useCallback((file: File) => {
+        const name = file.name.toLowerCase()
+        if (name.endsWith('.pdf')) {
+            parsePdfFile(file)
+        } else if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) {
+            parseExcelFile(file)
+        } else {
+            setError('Per favore carica l\'estratto conto Revolut in PDF, oppure un file Excel (.xlsx, .xls) o CSV')
+        }
+    }, [parseExcelFile, parsePdfFile])
+
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         setIsDragging(false)
 
         const file = e.dataTransfer.files[0]
-        if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv'))) {
-            parseExcelFile(file)
-        } else {
-            setError('Per favore carica un file Excel (.xlsx, .xls) o CSV')
+        if (file) {
+            handleFile(file)
         }
-    }, [parseExcelFile])
+    }, [handleFile])
 
     const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            parseExcelFile(file)
+            handleFile(file)
         }
-    }, [parseExcelFile])
+        // Permette di ricaricare lo stesso file
+        e.target.value = ''
+    }, [handleFile])
 
     const handleImport = async () => {
         if (parsedData.length === 0) return
@@ -232,7 +250,7 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
     return (
         <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                📤 Import Excel Revolut
+                📤 Import estratto conto Revolut
             </h2>
 
             {/* Drop Zone */}
@@ -248,18 +266,18 @@ export default function ExcelUploader({ categories, onImportComplete }: ExcelUpl
             >
                 <input
                     type="file"
-                    accept=".xlsx,.xls,.csv"
+                    accept=".pdf,.xlsx,.xls,.csv"
                     onChange={handleFileInput}
                     className="hidden"
                     id="excel-input"
                 />
                 <label htmlFor="excel-input" className="cursor-pointer">
-                    <div className="text-4xl mb-3">📊</div>
+                    <div className="text-4xl mb-3">📄</div>
                     <p className="text-gray-600">
-                        Trascina qui il tuo file Excel Revolut
+                        Trascina qui l&apos;estratto conto Revolut
                     </p>
                     <p className="text-gray-400 text-sm mt-1">
-                        oppure clicca per selezionare (.xlsx, .xls, .csv)
+                        oppure clicca per selezionare (.pdf, .xlsx, .xls, .csv)
                     </p>
                 </label>
             </div>
