@@ -83,7 +83,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                     <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                         {view === 'selection' && '➕ Aggiungi / Importa'}
                         {view === 'manual' && '✏️ Nuova Transazione'}
-                        {view === 'import' && '📤 Importa Excel/CSV'}
+                        {view === 'import' && '📤 Importa estratto conto'}
                     </h2>
                     <button
                         onClick={resetForm}
@@ -112,7 +112,7 @@ export default function TransactionForm({ categories, onSuccess }: TransactionFo
                         >
                             <span className="text-3xl group-hover:scale-110 transition-transform">📂</span>
                             <div className="text-left">
-                                <h3 className="font-bold text-green-900">Carica File Excel/CSV</h3>
+                                <h3 className="font-bold text-green-900">Carica estratto conto PDF, Excel o CSV</h3>
                                 <p className="text-sm text-green-700">Importa estratto conto Revolut</p>
                             </div>
                         </button>
