@@ -32,20 +32,16 @@ export default function SmartRulesModal({ category, rules, onClose, onUpdate, on
             if (insertError) throw insertError
 
             if (applyToExisting) {
-                const { data: txs, error: fetchError } = await supabase
+                // Update diretto: nessun limite di 1000 righe
+                const { data: txs, error: updateError } = await supabase
                     .from('transactions')
-                    .select('id')
+                    .update({ category_id: category.id })
                     .ilike('description', `%${newPattern.trim()}%`)
+                    .select('id')
 
-                if (fetchError) throw fetchError
+                if (updateError) throw updateError
 
                 if (txs && txs.length > 0) {
-                    const { error: updateError } = await supabase
-                        .from('transactions')
-                        .update({ category_id: category.id })
-                        .in('id', txs.map(t => t.id))
-
-                    if (updateError) throw updateError
                     setFeedback({ type: 'success', message: `Aggiunta e applicata a ${txs.length} transazioni` })
                     onTransactionsUpdated()
                 } else {
