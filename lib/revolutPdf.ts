@@ -32,11 +32,17 @@ export async function extractPdfPages(
   const pages: PdfTextItem[][] = []
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i)
-    const content = await page.getTextContent()
     const items: PdfTextItem[] = []
-    for (const item of content.items) {
-      if (!('str' in item) || !item.str.trim()) continue
-      items.push({ str: item.str, x: item.transform[4], y: item.transform[5], width: item.width })
+    // Non usiamo page.getTextContent(): itera lo stream con "for await", che Safari non supporta
+    // ("undefined is not a function"). Leggiamo lo stream a mano con getReader().
+    const reader = page.streamTextContent().getReader()
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      for (const item of (value as Awaited<ReturnType<typeof page.getTextContent>>).items) {
+        if (!('str' in item) || !item.str.trim()) continue
+        items.push({ str: item.str, x: item.transform[4], y: item.transform[5], width: item.width })
+      }
     }
     pages.push(items)
   }
